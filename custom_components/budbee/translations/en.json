@@ -1,0 +1,145 @@
+{
+  "title": "Budbee",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up Budbee",
+        "description": "Budbee tracking needs no account and no e-mail address — the hub is created right away. Add parcels afterwards via the integration options or the `budbee.track_parcel` service."
+      }
+    },
+    "abort": {
+      "already_configured": "Budbee is already set up."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Budbee options",
+        "sections": {
+          "parcels": {
+            "name": "Parcels",
+            "data": {
+              "add": "Add a parcel",
+              "remove": "Remove parcels"
+            },
+            "data_description": {
+              "add": "Enter the Budbee tracking or order number to start tracking it. You find it in the shipping confirmation e-mail or on the tracking link the shop sent you. The e-mail address Budbee's own tracking page asks for is not needed here."
+            }
+          },
+          "delivered": {
+            "name": "Delivered parcels",
+            "data": {
+              "delivered_filter_type": "Filter by",
+              "delivered_filter_amount": "Amount"
+            },
+            "data_description": {
+              "delivered_filter_type": "Show delivered parcels from the last X days, or limit to the X most recent.",
+              "delivered_filter_amount": "Number of days or parcels to show."
+            }
+          },
+          "polling": {
+            "name": "Polling",
+            "data": {
+              "refresh_interval": "Refresh every"
+            },
+            "data_description": {
+              "refresh_interval": "How often the integration checks Budbee for parcel updates. A slower interval is gentler on Budbee's API; the default of 30 minutes is plenty for most parcels."
+            }
+          }
+        }
+      }
+    },
+    "error": {
+      "invalid_tracking_code": "That does not look like a Budbee tracking code.",
+      "already_tracked": "That parcel is already being tracked."
+    }
+  },
+  "selector": {
+    "refresh_interval": {
+      "options": {
+        "15": "15 minutes",
+        "30": "30 minutes",
+        "60": "60 minutes",
+        "120": "120 minutes",
+        "240": "240 minutes"
+      }
+    },
+    "delivered_filter_type": {
+      "options": {
+        "days": "Days",
+        "parcels": "Number of parcels"
+      }
+    }
+  },
+  "services": {
+    "track_parcel": {
+      "name": "Track parcel",
+      "description": "Start tracking a parcel by its Budbee tracking code.",
+      "fields": {
+        "tracking_code": {
+          "name": "Tracking code",
+          "description": "The Budbee tracking code."
+        }
+      }
+    },
+    "untrack_parcel": {
+      "name": "Untrack parcel",
+      "description": "Stop tracking a parcel by its Budbee tracking code.",
+      "fields": {
+        "tracking_code": {
+          "name": "Tracking code",
+          "description": "The Budbee tracking code to stop tracking."
+        }
+      }
+    }
+  },
+  "device_automation": {
+    "trigger_type": {
+      "parcel_registered": "A parcel was registered",
+      "parcel_status_changed": "A parcel's status changed",
+      "parcel_delivered": "A parcel was delivered",
+      "parcel_delivery_time_changed": "A parcel's expected delivery time changed",
+      "outgoing_parcel_status_changed": "A sent parcel's status changed",
+      "outgoing_parcel_delivered": "A sent parcel was delivered"
+    }
+  },
+  "entity": {
+    "button": {
+      "refresh": {
+        "name": "Refresh"
+      }
+    },
+    "calendar": {
+      "deliveries": {
+        "name": "Deliveries"
+      }
+    },
+    "sensor": {
+      "incoming_parcels": {
+        "name": "Incoming parcels",
+        "unit_of_measurement": "parcels"
+      },
+      "next_delivery": {
+        "name": "Next delivery"
+      },
+      "delivered_parcels": {
+        "name": "Delivered parcels",
+        "unit_of_measurement": "parcels"
+      },
+      "outgoing_parcels": {
+        "name": "Outgoing parcels",
+        "unit_of_measurement": "parcels"
+      },
+      "outgoing_delivered_parcels": {
+        "name": "Delivered outgoing parcels",
+        "unit_of_measurement": "parcels"
+      },
+      "last_update": {
+        "name": "Last successful update"
+      },
+      "parcel": {
+        "name": "Parcel {barcode}"
+      }
+    }
+  }
+}

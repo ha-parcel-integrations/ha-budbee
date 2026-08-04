@@ -1,0 +1,79 @@
+name: 🏷️ Unrecognised parcel status
+description: The integration logged a warning asking you to report something it did not recognise.
+title: "[status] "
+labels: ["unrecognised-status"]
+assignees:
+  - peternijssen
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **This integration was built from a single real Budbee parcel** — a
+        Dutch locker order that had not moved yet. Everything beyond that (home
+        deliveries, a parcel being collected, a return you send, a non-Dutch
+        order) is mapped from Budbee's own tracking page rather than from a
+        response anyone has seen. Below 1.0 it logs a warning for each of those
+        assumptions, and every one links here.
+
+        The most valuable warning is the structure listing you get for a **home
+        delivery**:
+
+        ```
+        Budbee home-delivery response structure (field names and types only,
+        no values — safe to paste). …
+            consignment.start: str
+            status.state: str
+            …
+        ```
+
+        It contains **field names and types only** — no address, no name, no
+        order number, no door code — so it is safe to paste in full. The other
+        warnings (an unrecognised status, a field we do not map, a parcel put on
+        the "outgoing" sensor, an ETA on a locker order) are just as welcome.
+  - type: textarea
+    id: logline
+    attributes:
+      label: The log line(s)
+      description: Copy the full warning from your Home Assistant log — the whole block, including the indented lines under it.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: reality
+    attributes:
+      label: What did Budbee itself say at that moment?
+      description: >-
+        What Budbee's own app or tracking page showed for this parcel — "in the
+        Budbee Box", "collected", the delivery window it displayed. That
+        sentence is what turns a status code into a meaning, and we cannot look
+        it up anywhere. Especially useful for a locker parcel: was it waiting in
+        the box, or already in your hands?
+      placeholder: "e.g. the page showed 'ligt klaar in de Budbee Box tot vrijdag'"
+  - type: input
+    id: version
+    attributes:
+      label: Integration version
+      placeholder: "e.g. 0.9.0"
+    validations:
+      required: true
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home Assistant version
+      placeholder: "e.g. 2026.7.0"
+  - type: markdown
+    attributes:
+      value: |
+        ### 💡 Even better: attach a diagnostics file
+
+        A diagnostics download shows us the exact payload behind the warning —
+        usually all we need to fix the mapping, with no back-and-forth.
+
+        1. In Home Assistant, open **Settings → Devices & services**.
+        2. Open this integration, then click the **⋮** (three dots) on its entry.
+        3. Choose **Download diagnostics**.
+        4. Drag the downloaded file onto this issue to attach it.
+
+        Home Assistant redacts the file before download — names, addresses,
+        tracking numbers and the locker's location are removed, while the status
+        codes we need are kept.
