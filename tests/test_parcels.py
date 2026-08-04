@@ -520,3 +520,9 @@ def test_locker_orders_do_not_dump_their_structure(caplog):
     """The box payload is confirmed; a full dump there would be noise."""
     normalize_parcel(box_sample())
     assert "response structure" not in caplog.text
+
+
+def test_live_locker_fields_are_known(caplog):
+    """Fields a real locker order turned out to carry must not warn."""
+    normalize_parcel(box_sample())
+    assert "lockerBrands" not in caplog.text

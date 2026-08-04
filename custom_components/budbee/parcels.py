@@ -86,6 +86,9 @@ _KNOWN_BOX_KEYS = frozenset(
         "pickedUpFromMerchant", "deliveredAt", "latestPickupDate", "eta",
         "etaInformation", "orderLocation", "consignment", "recall", "returns",
         "merchant", "lockerIdentifier", "lockerAddress", "lockerAttributes",
+        # Reported by a live locker order on 2026-08-04, alongside the
+        # duplicated ``openHours`` — a locker attribute, nothing canonical.
+        "lockerBrands",
         "openHours", "demand", "consumer", "consumerAddress",
         "identificationAtLocker", "rating", "campaign", "nudges",
         "canSwitchDeliveryType", "canSwitchLocker", "canExtendPickupTime",

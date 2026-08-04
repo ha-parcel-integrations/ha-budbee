@@ -95,6 +95,8 @@ def box_sample(code: str = ACTIVE_CODE, status: str = "NotStarted") -> dict:
             "supportLink": None,
         },
         "lockerIdentifier": "NL-LOCKER-001",
+        # Seen on a live locker order; a locker attribute, not a parcel field.
+        "lockerBrands": ["Budbee"],
         "lockerAddress": dict(locker_address),
         "lockerAttributes": {
             "identifier": "NL-LOCKER-001",
