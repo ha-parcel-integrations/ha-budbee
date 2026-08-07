@@ -60,8 +60,10 @@ canonical mapping. Do not duplicate them here.
   the recipient. `unmasked()` turns it into `None`; without it every parcel
   would report a receiver of `*****`.
 - **Deliberate `None`s.** `weight` / `dimensions` (never exposed),
-  `history` (**no** `events[]` on either route and every history sub-route
-  404s — see below), `receiver` (masked, above), and `planned_from`/`planned_to`
+  `history` (**no** `events[]` on `/box/` and every history sub-route 404s
+  there — see below; the `DELIVERY` conspectus may carry `events[]`, but no
+  home-delivery order has been read live, so `history` stays `None` there too
+  until one is), `receiver` (masked, above), and `planned_from`/`planned_to`
   on locker orders: `latestPickupDate` is a *collection deadline*, not a
   delivery window, so it stays under `raw`. Same call `ha-inpost` makes for
   `expiryDate`.

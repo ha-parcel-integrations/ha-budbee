@@ -92,7 +92,7 @@ def test_order_type_falls_back_to_the_payload_shape():
         ("Miss", ParcelStatus.PROBLEM),
         ("Backordered", ParcelStatus.PROBLEM),
         ("CollectedShippingLabel", ParcelStatus.IN_TRANSIT),
-        ("ReturnedToTerminal", ParcelStatus.RETURNING),
+        ("ReturnedToTerminal", ParcelStatus.IN_TRANSIT),
         ("ReturnedToMerchant", ParcelStatus.RETURNING),
     ],
 )
@@ -107,11 +107,11 @@ def test_delivery_status_map_is_complete(code, expected):
         ("Pending", ParcelStatus.REGISTERED),
         ("Collected", ParcelStatus.IN_TRANSIT),
         ("CollectedShippingLabel", ParcelStatus.IN_TRANSIT),
-        ("DroppedOff", ParcelStatus.AT_PICKUP_POINT),
+        ("DroppedOff", ParcelStatus.IN_TRANSIT),
         ("Delivered", ParcelStatus.AT_PICKUP_POINT),
         ("PickedUp", ParcelStatus.DELIVERED),
         ("Undelivered", ParcelStatus.PROBLEM),
-        ("ReturnedToTerminal", ParcelStatus.RETURNING),
+        ("ReturnedToTerminal", ParcelStatus.IN_TRANSIT),
         ("ReturnedToMerchant", ParcelStatus.RETURNING),
     ],
 )
@@ -269,6 +269,28 @@ def test_normalize_box_order_waiting_in_the_locker():
     assert parcel["delivered_at"] is None
     assert parcel["pickup"] is True
     assert parcel["pickup_point"] == "Budbee Box Example Supermarket"
+
+
+def test_normalize_box_order_dropped_off_is_in_transit_not_pickup():
+    """Regression: a locker drop-off is not the recipient's pickup point.
+
+    ``DroppedOff`` is a person placing the parcel into a locker for a driver to
+    collect — the sender's hand-over, hours before the parcel goes anywhere
+    near the recipient's locker. Only ``Delivered`` means waiting for you.
+    """
+    parcel = normalize_parcel(box_sample(status="DroppedOff"))
+    assert parcel["status"] == ParcelStatus.IN_TRANSIT
+    assert parcel["pickup"] is False
+
+
+def test_normalize_returned_to_terminal_is_in_transit_on_both_order_types():
+    """Regression: "Returned" names terminal arrival, not a reversal."""
+    box_parcel = normalize_parcel(box_sample(status="ReturnedToTerminal"))
+    assert box_parcel["status"] == ParcelStatus.IN_TRANSIT
+    assert box_parcel["pickup"] is False
+
+    delivery_parcel = normalize_parcel(delivery_sample(state="ReturnedToTerminal"))
+    assert delivery_parcel["status"] == ParcelStatus.IN_TRANSIT
 
 
 def test_normalize_box_order_is_delivered_only_once_picked_up():

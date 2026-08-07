@@ -527,7 +527,12 @@ async def test_outgoing_status_change_fires_the_outgoing_event(hass):
         f"{DOMAIN}_parcel_status_changed", lambda e: incoming.append(e)
     )
 
+    # Starts at NotStarted (registered), not outgoing_sample()'s default
+    # Collected, so the DroppedOff step below is a genuine status change and
+    # not a same-to-same no-op now that DroppedOff and Collected both map to
+    # in_transit.
     sample = outgoing_sample()
+    sample["status"] = "NotStarted"
     client.async_get_parcel.return_value = sample
     await coordinator._async_update_data()  # first refresh: suppressed
 
@@ -542,7 +547,7 @@ async def test_outgoing_status_change_fires_the_outgoing_event(hass):
     await coordinator._async_update_data()
     await hass.async_block_till_done()
 
-    assert [e.data["new_status"] for e in changed] == [ParcelStatus.AT_PICKUP_POINT]
+    assert [e.data["new_status"] for e in changed] == [ParcelStatus.IN_TRANSIT]
     assert len(delivered) == 1
     assert incoming == []
 

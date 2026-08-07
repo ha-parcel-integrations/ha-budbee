@@ -54,25 +54,33 @@ _STATUS_MAP_DELIVERY: dict[str, ParcelStatus] = {
     "Miss": ParcelStatus.PROBLEM,
     "Backordered": ParcelStatus.PROBLEM,
     STATUS_COLLECTED_SHIPPING_LABEL: ParcelStatus.IN_TRANSIT,
-    "ReturnedToTerminal": ParcelStatus.RETURNING,
+    # "Returned" names arrival at a Budbee terminal, not a reversal — ordinary
+    # forward progress, confirmed live. Only ``ReturnedToMerchant`` is the
+    # genuine going-back-to-the-sender state.
+    "ReturnedToTerminal": ParcelStatus.IN_TRANSIT,
     "ReturnedToMerchant": ParcelStatus.RETURNING,
 }
 
-# Locker orders — 10 values, same source. The two entries that differ from the
-# door map are the whole reason this carrier carries two: ``DroppedOff`` and
-# ``Delivered`` both mean *waiting in the box*, and ``PickedUp`` is the real
-# hand-over. Reading the door map here would announce a delivery while the
-# parcel is still locked in a hatch.
+# Locker orders — 10 values, same source. This carrier needs two maps because
+# ``Delivered`` — and only ``Delivered`` — means *waiting in the locker for
+# you*; reading the door map here would announce a delivery while the parcel
+# is still in a hatch. ``DroppedOff`` reads like the same event but is not: it
+# fires whenever a parcel is placed into a locker by anyone — a courier's
+# hand-off for onward transit reads identically to a customer's own drop-off —
+# so direction and finality are not encoded in the status string itself.
+# Confirmed live as the *sender's* hand-off, hours before the parcel reached a
+# terminal. ``ReturnedToTerminal`` is the same trap: "Returned" names arrival
+# at a Budbee terminal, not a reversal — see ``_STATUS_MAP_DELIVERY`` above.
 _STATUS_MAP_BOX: dict[str, ParcelStatus] = {
     "NotStarted": ParcelStatus.REGISTERED,
     "Pending": ParcelStatus.REGISTERED,
     "Collected": ParcelStatus.IN_TRANSIT,
     STATUS_COLLECTED_SHIPPING_LABEL: ParcelStatus.IN_TRANSIT,
-    "DroppedOff": ParcelStatus.AT_PICKUP_POINT,
+    "DroppedOff": ParcelStatus.IN_TRANSIT,
     "Delivered": ParcelStatus.AT_PICKUP_POINT,
     "PickedUp": ParcelStatus.DELIVERED,
     "Undelivered": ParcelStatus.PROBLEM,
-    "ReturnedToTerminal": ParcelStatus.RETURNING,
+    "ReturnedToTerminal": ParcelStatus.IN_TRANSIT,
     "ReturnedToMerchant": ParcelStatus.RETURNING,
 }
 
