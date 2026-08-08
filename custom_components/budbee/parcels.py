@@ -166,7 +166,7 @@ def _warn_unexpected_keys(order: str, raw: dict) -> None:
         )
 
 
-def _warn_unverified_shapes(order: str, raw: dict, status: ParcelStatus) -> None:
+def _warn_unverified_shapes(order: str, raw: dict) -> None:
     """Report everything about this parcel that has never been seen live.
 
     Budbee shipped with exactly one confirmed payload: an NL locker order that
@@ -200,22 +200,13 @@ def _warn_unverified_shapes(order: str, raw: dict, status: ParcelStatus) -> None
         report_structure(raw)
         return
 
-    if status is ParcelStatus.DELIVERED:
-        _warn_once(
-            "shape:box-picked-up",
-            "First Budbee locker parcel collected. Please confirm the "
-            "collection time on the sensor matches when you actually took it "
-            "out of the locker."
-            "\n  deliveredAt_present=%s",
-            raw.get("deliveredAt") is not None,
-        )
-
     if raw.get("eta") or raw.get("etaInformation"):
         _warn_once(
             "shape:box-eta",
-            "A Budbee locker parcel carries an ETA, which we have never seen "
-            "and currently ignore (locker orders are reported without a "
-            "delivery window)."
+            "A Budbee locker parcel carries an ETA. Confirmed once (2026-08-08:"
+            " predicted 25 minutes ahead of the real locker-drop) as the "
+            "delivery-into-locker time, now reported as `planned_to` — please "
+            "confirm it matches when your parcel actually reached the locker."
             "\n  fields=%s",
             sorted(k for k in ("eta", "etaInformation") if raw.get(k)),
         )
@@ -441,10 +432,13 @@ def normalize_parcel(raw: dict) -> dict:
       Budbee masks unless you hand it the e-mail address we deliberately never
       ask for. It is the HA user themselves anyway.
     * ``weight`` and ``dimensions`` are never exposed by this carrier.
-    * On a locker order ``planned_from`` / ``planned_to`` are ``None``:
-      ``latestPickupDate`` is a *collection deadline*, not a delivery window,
-      and putting it there would make the calendar lie about when the parcel
-      arrives. It stays under ``raw``.
+    * On a locker order ``planned_from`` is always ``None`` — Budbee reports no
+      window start, only a single ``eta`` point once the parcel reaches a
+      terminal, which we surface as ``planned_to`` (confirmed live 2026-08-08
+      as the delivery-into-locker time). ``latestPickupDate`` is a *collection
+      deadline*, not a delivery window, and putting it in ``planned_to`` would
+      make the calendar lie about when the parcel arrives — it stays under
+      ``raw``.
     """
     order = order_type(raw)
     raw_status = _raw_status(raw)
@@ -454,17 +448,25 @@ def normalize_parcel(raw: dict) -> dict:
     if raw_status is not None:
         # Skipped for the placeholder a not-yet-registered code gets — that is
         # a normal state with no payload to have an opinion about.
-        _warn_unverified_shapes(order, raw, status)
+        _warn_unverified_shapes(order, raw)
 
     if order == ORDER_TYPE_BOX:
         # Confirmed against a real NL locker order.
         tracking_code = raw.get("token")
-        # Derive the collection moment from the status, never from the mere
-        # presence of ``deliveredAt`` — on this route ``Delivered`` is the drop
-        # into the locker, so that field can be set long before the user has
-        # the parcel.
+        # Confirmed live 2026-08-08: ``deliveredAt`` is set at the real
+        # hand-over (``PickedUp``), not at the locker-drop (``Delivered``) —
+        # but still derive the collection moment from the status, never from
+        # the mere presence of the field, in case a future order proves an
+        # exception (e.g. one that skips ``DroppedOff`` straight to
+        # ``PickedUp``).
         delivered_at = to_iso_timestamp(raw.get("deliveredAt")) if delivered else None
-        planned_from = planned_to = None
+        # No window start is ever reported — only a single ETA point, confirmed
+        # live 2026-08-08 as the delivery-*into-the-locker* time (25 minutes
+        # ahead of the real drop). `etaInformation.eta` mirrors the top-level
+        # `eta`; fall back to it in case a future order carries only one.
+        planned_from = None
+        eta = raw.get("eta") or _get(raw, "etaInformation", "eta")
+        planned_to = to_iso_timestamp(eta)
         receiver = unmasked(_get(raw, "consumer", "name"))
     else:
         # Reconstructed from Budbee's own tracking client; no door delivery has

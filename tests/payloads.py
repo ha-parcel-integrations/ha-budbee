@@ -145,9 +145,16 @@ def waiting_sample(code: str = ACTIVE_CODE) -> dict:
 
 
 def collected_sample(code: str = DELIVERED_CODE) -> dict:
-    """A locker order the user has actually collected — ``PickedUp``."""
+    """A locker order the user has actually collected — ``PickedUp``.
+
+    ``rating`` is populated here on purpose: a real ``PickedUp`` order read on
+    2026-08-08 carried ``{"score": 5}`` where every prior (``NotStarted`` /
+    ``Delivered``) snapshot had it ``None`` — the rating prompt only appears
+    once the parcel is actually collected.
+    """
     sample = waiting_sample(code)
     sample["status"] = "PickedUp"
+    sample["rating"] = {"score": 5}
     return sample
 
 

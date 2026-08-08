@@ -63,10 +63,18 @@ canonical mapping. Do not duplicate them here.
   `history` (**no** `events[]` on `/box/` and every history sub-route 404s
   there — see below; the `DELIVERY` conspectus may carry `events[]`, but no
   home-delivery order has been read live, so `history` stays `None` there too
-  until one is), `receiver` (masked, above), and `planned_from`/`planned_to`
-  on locker orders: `latestPickupDate` is a *collection deadline*, not a
-  delivery window, so it stays under `raw`. Same call `ha-inpost` makes for
-  `expiryDate`.
+  until one is), `receiver` (masked, above), and `planned_from` on locker
+  orders — Budbee reports no window start, ever. `latestPickupDate` is a
+  *collection deadline*, not a delivery window, so it stays under `raw` rather
+  than `planned_to`. Same call `ha-inpost` makes for `expiryDate`.
+- **`planned_to` on a locker order comes from `eta`, once it appears.**
+  `eta`/`etaInformation` are `null` until the parcel reaches a terminal
+  (`ReturnedToTerminal`), confirmed live 2026-08-08 as the delivery-*into-the-
+  locker* time (predicted 25 minutes ahead of the real drop) — not a
+  door-delivery window, and not the collection deadline. Suppressed once
+  `delivered` like every other carrier's `planned_to`. The `shape:box-eta`
+  one-shot WARNING still fires once, asking the user to confirm the value
+  matched reality, since the confirmation so far is a single data point.
 - **No `include_history` option** — the only carrier in the suite without one.
   A toggle that can never produce anything is worse than no toggle, and
   accumulating a timeline locally from polls was rejected: it would differ per
@@ -90,14 +98,17 @@ canonical mapping. Do not duplicate them here.
   assumption beyond it logs a one-shot WARNING with a prefilled issue link:
   unmapped status (per order type), a payload field we do not know, an order
   type outside `BOX`/`DELIVERY`, a `meta` we could not route on, a sibling
-  brand, an ETA on a locker order, the first collected locker parcel (does
-  `deliveredAt` mean drop or collection?), the first outgoing shipment, and —
-  the valuable one — a **full `path: type` structure dump of any home
-  delivery**, keyed on the shape so a richer payload reports again. Types only,
-  never values. Locker orders deliberately get no dump: that payload is
-  confirmed, and a 100-line WARNING for it would be noise. `_warn_once()` in
-  `api.py` / `parcels.py` backs all of it; `tests/conftest.py` clears the sets
-  between tests.
+  brand, an ETA on a locker order, the first outgoing shipment, and — the
+  valuable one — a **full `path: type` structure dump of any home delivery**,
+  keyed on the shape so a richer payload reports again. Types only, never
+  values. Locker orders deliberately get no dump: that payload is confirmed,
+  and a 100-line WARNING for it would be noise. `_warn_once()` in `api.py` /
+  `parcels.py` backs all of it; `tests/conftest.py` clears the sets between
+  tests.
+  **Retired in 0.10.0:** the "first collected locker parcel" WARNING (did
+  `deliveredAt` mean drop or collection?) — confirmed live 2026-08-08 as the
+  collection timestamp, not the drop; see
+  `carrier-research/api/budbee/tracking.md`.
 - **Redaction is stricter than elsewhere.** Besides the recipient, the payload
   carries locker coordinates and — on a door delivery — `identification.code`
   and `deliveryPinCode`. Those are physical access codes; a diagnostics file

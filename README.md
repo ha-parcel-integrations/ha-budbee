@@ -165,7 +165,7 @@ logger:
 ## Troubleshooting
 
 - **A parcel shows `unknown`** — Budbee does not know the number yet (their API answers `ORDER_NOT_FOUND` until the shop hands the parcel over), or the number is wrong. It picks up automatically once Budbee registers it.
-- **No expected delivery time on a locker parcel** — Budbee gives none. A Budbee Box order has a *collection* deadline instead, which is not a delivery window, so it is not shown as one.
+- **No expected delivery time on a locker parcel until it reaches a terminal** — a Budbee Box order only gets an ETA once it's on its final leg to the locker; before that, `planned_to` is empty. It never gets a *collection* deadline either — that's a different date (when you must pick it up) and stays under the raw attribute, not the delivery window.
 - **No status history** — Budbee's tracking API returns no event list at all, so the `history` attribute is always empty.
 - **A status logs "Unrecognised Budbee status"** — please [open an issue](https://github.com/ha-parcel-integrations/ha-budbee/issues/new) with the logged line so the mapping can be extended.
 

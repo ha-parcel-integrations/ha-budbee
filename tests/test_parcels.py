@@ -242,8 +242,8 @@ def test_normalize_box_order_in_transit():
     assert parcel["raw_status"] == "NotStarted"
     assert parcel["delivered"] is False
     assert parcel["url"] == f"https://track.budbee.com/{ACTIVE_CODE}"
-    # A locker order exposes no delivery window at all: latestPickupDate is a
-    # collection deadline, and it stays under raw.
+    # No eta yet at NotStarted, so no window. latestPickupDate is a collection
+    # deadline, never a delivery window, and stays under raw regardless.
     assert parcel["planned_from"] is None
     assert parcel["planned_to"] is None
     # Never exposed by this carrier.
@@ -466,10 +466,11 @@ def test_first_home_delivery_asks_for_confirmation(caplog):
     assert "issues/new" in caplog.text
 
 
-def test_locker_collection_asks_about_the_timestamp(caplog):
-    """What ``deliveredAt`` means on a box order has never been observed."""
+def test_locker_collection_no_longer_asks_about_the_timestamp(caplog):
+    """What ``deliveredAt`` means on a box order was confirmed live (collection,
+    not drop) on 2026-08-08 — the one-shot warning that asked is retired."""
     normalize_parcel(collected_sample())
-    assert "collected" in caplog.text.lower()
+    assert "collected" not in caplog.text.lower()
 
 
 def test_unroutable_order_reports_the_guess(caplog):
@@ -487,12 +488,21 @@ def test_sibling_brand_is_reported(caplog):
     assert "PORTERBUDDY" in caplog.text
 
 
-def test_eta_on_a_locker_order_is_reported(caplog):
-    """We report locker orders without a window; an ETA would change that."""
+def test_eta_on_a_locker_order_becomes_planned_to(caplog):
+    """Confirmed live 2026-08-08: ``eta`` is the delivery-into-locker time."""
     raw = box_sample()
-    raw["eta"] = {"date": "2026-04-29T13:40:00Z"}
-    normalize_parcel(raw)
+    raw["eta"] = "2026-04-29T13:40:00Z"
+    parcel = normalize_parcel(raw)
+    assert parcel["planned_to"] == "2026-04-29T13:40:00Z"
+    assert parcel["planned_from"] is None
     assert "ETA" in caplog.text
+
+
+def test_eta_is_suppressed_once_picked_up():
+    raw = collected_sample()
+    raw["eta"] = "2026-04-29T13:40:00Z"
+    parcel = normalize_parcel(raw)
+    assert parcel["planned_to"] is None
 
 
 def test_pending_placeholder_reports_nothing(caplog):
