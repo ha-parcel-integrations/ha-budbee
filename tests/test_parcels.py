@@ -10,9 +10,11 @@ import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.budbee.const import (
+    CAPABILITIES,
     CONF_DELIVERED_FILTER_AMOUNT,
     CONF_DELIVERED_FILTER_TYPE,
     DOMAIN,
+    KNOWN_CAPABILITIES,
     ORDER_TYPE_BOX,
     ORDER_TYPE_DELIVERY,
     ParcelStatus,
@@ -345,6 +347,18 @@ def test_normalize_collapses_point_estimate_to_no_window_end():
     parcel = normalize_parcel(raw)
     assert parcel["planned_from"] == "2026-04-29T13:00:00Z"
     assert parcel["planned_to"] is None
+
+
+def test_capabilities_are_known_values():
+    """A typo here would silently misreport this carrier on the docs site."""
+    assert CAPABILITIES <= KNOWN_CAPABILITIES
+
+
+def test_capabilities_match_the_locker_and_window_support():
+    """CAPABILITIES must agree with test_normalize_locker_name_falls_back_to_the_address
+    and test_normalize_delivery_order_has_the_consignment_window — Budbee never
+    exposes weight/dimensions/history."""
+    assert CAPABILITIES == {"delivery_window", "pickup_point", "url"}
 
 
 def test_normalize_pending_placeholder():

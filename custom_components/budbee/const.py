@@ -28,6 +28,20 @@ class ParcelStatus(StrEnum):
 
 PLATFORMS = [Platform.BUTTON, Platform.CALENDAR, Platform.SENSOR]
 
+# Every optional key the parcel contract defines. CAPABILITIES below must be a
+# subset of this — it exists so a typo in CAPABILITIES fails a test instead of
+# silently dropping this carrier off a table on the docs site.
+KNOWN_CAPABILITIES = frozenset(
+    {"weight", "dimensions", "delivery_window", "pickup_point", "url", "history"}
+)
+
+# Which optional contract fields this carrier's API actually populates — feeds
+# the comparison table on the docs site. Keep in lockstep with
+# normalize_parcel() in parcels.py: everything not listed here comes back as a
+# literal None there. Budbee never exposes weight/dimensions and has no
+# working history route, but does report a locker name and a delivery window.
+CAPABILITIES = frozenset({"delivery_window", "pickup_point", "url"})
+
 # Where users report something we do not recognise yet — an unmapped status, an
 # order type outside the two known ones, a payload shape we did not expect.
 # Lives here rather than in one module because both the API client and the

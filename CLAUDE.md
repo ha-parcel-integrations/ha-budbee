@@ -66,7 +66,9 @@ canonical mapping. Do not duplicate them here.
   until one is), `receiver` (masked, above), and `planned_from` on locker
   orders — Budbee reports no window start, ever. `latestPickupDate` is a
   *collection deadline*, not a delivery window, so it stays under `raw` rather
-  than `planned_to`. Same call `ha-inpost` makes for `expiryDate`.
+  than `planned_to`. Same call `ha-inpost` makes for `expiryDate`. Reflected
+  in `const.py`'s `CAPABILITIES` (feeds the docs site's comparison table) —
+  keep the two in agreement if that ever changes.
 - **`planned_to` on a locker order comes from `eta`, once it appears.**
   `eta`/`etaInformation` are `null` until the parcel reaches a terminal
   (`ReturnedToTerminal`), confirmed live 2026-08-08 as the delivery-*into-the-
