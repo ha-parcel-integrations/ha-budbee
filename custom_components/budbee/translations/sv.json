@@ -1,0 +1,145 @@
+{
+  "title": "Budbee",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Konfigurera Budbee",
+        "description": "Budbee-spårning kräver varken konto eller e-postadress – navet skapas direkt. Lägg till paket efteråt via integrationens alternativ eller tjänsten `budbee.track_parcel`."
+      }
+    },
+    "abort": {
+      "already_configured": "Budbee är redan konfigurerat."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Budbee-alternativ",
+        "sections": {
+          "parcels": {
+            "name": "Paket",
+            "data": {
+              "add": "Lägg till ett paket",
+              "remove": "Ta bort paket"
+            },
+            "data_description": {
+              "add": "Ange Budbees spårnings- eller ordernummer för att börja spåra det. Du hittar det i bekräftelsemejlet för leveransen eller på spårningslänken som butiken skickade. E-postadressen som Budbees egen spårningssida frågar efter behövs inte här."
+            }
+          },
+          "delivered": {
+            "name": "Levererade paket",
+            "data": {
+              "delivered_filter_type": "Filtrera efter",
+              "delivered_filter_amount": "Antal"
+            },
+            "data_description": {
+              "delivered_filter_type": "Visa levererade paket från de senaste X dagarna, eller begränsa till de X senaste.",
+              "delivered_filter_amount": "Antal dagar eller paket att visa."
+            }
+          },
+          "polling": {
+            "name": "Uppdatering",
+            "data": {
+              "refresh_interval": "Uppdatera var"
+            },
+            "data_description": {
+              "refresh_interval": "Hur ofta integrationen kontrollerar Budbee för paketuppdateringar. Ett längre intervall är skonsammare mot Budbees API; standardvärdet på 30 minuter räcker gott för de flesta paket."
+            }
+          }
+        }
+      }
+    },
+    "error": {
+      "invalid_tracking_code": "Det ser inte ut som en Budbee-spårningskod.",
+      "already_tracked": "Det paketet spåras redan."
+    }
+  },
+  "selector": {
+    "refresh_interval": {
+      "options": {
+        "15": "15 minuter",
+        "30": "30 minuter",
+        "60": "60 minuter",
+        "120": "120 minuter",
+        "240": "240 minuter"
+      }
+    },
+    "delivered_filter_type": {
+      "options": {
+        "days": "Dagar",
+        "parcels": "Antal paket"
+      }
+    }
+  },
+  "services": {
+    "track_parcel": {
+      "name": "Spåra paket",
+      "description": "Börja spåra ett paket med dess Budbee-spårningskod.",
+      "fields": {
+        "tracking_code": {
+          "name": "Spårningskod",
+          "description": "Budbee-spårningskoden."
+        }
+      }
+    },
+    "untrack_parcel": {
+      "name": "Sluta spåra paket",
+      "description": "Sluta spåra ett paket med dess Budbee-spårningskod.",
+      "fields": {
+        "tracking_code": {
+          "name": "Spårningskod",
+          "description": "Budbee-spårningskoden att sluta spåra."
+        }
+      }
+    }
+  },
+  "device_automation": {
+    "trigger_type": {
+      "parcel_registered": "Ett paket registrerades",
+      "parcel_status_changed": "Ett pakets status ändrades",
+      "parcel_delivered": "Ett paket levererades",
+      "parcel_delivery_time_changed": "Ett pakets förväntade leveranstid ändrades",
+      "outgoing_parcel_status_changed": "Ett skickat pakets status ändrades",
+      "outgoing_parcel_delivered": "Ett skickat paket levererades"
+    }
+  },
+  "entity": {
+    "button": {
+      "refresh": {
+        "name": "Uppdatera"
+      }
+    },
+    "calendar": {
+      "deliveries": {
+        "name": "Leveranser"
+      }
+    },
+    "sensor": {
+      "incoming_parcels": {
+        "name": "Inkommande paket",
+        "unit_of_measurement": "paket"
+      },
+      "next_delivery": {
+        "name": "Nästa leverans"
+      },
+      "delivered_parcels": {
+        "name": "Levererade paket",
+        "unit_of_measurement": "paket"
+      },
+      "outgoing_parcels": {
+        "name": "Utgående paket",
+        "unit_of_measurement": "paket"
+      },
+      "outgoing_delivered_parcels": {
+        "name": "Levererade utgående paket",
+        "unit_of_measurement": "paket"
+      },
+      "last_update": {
+        "name": "Senaste lyckade uppdatering"
+      },
+      "parcel": {
+        "name": "Paket {barcode}"
+      }
+    }
+  }
+}

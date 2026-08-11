@@ -1,0 +1,145 @@
+{
+  "title": "Budbee",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Määritä Budbee",
+        "description": "Budbee-seuranta ei vaadi tiliä eikä sähköpostiosoitetta – keskus luodaan heti. Lisää paketteja myöhemmin integraation asetusten tai `budbee.track_parcel`-palvelun kautta."
+      }
+    },
+    "abort": {
+      "already_configured": "Budbee on jo määritetty."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Budbee-asetukset",
+        "sections": {
+          "parcels": {
+            "name": "Paketit",
+            "data": {
+              "add": "Lisää paketti",
+              "remove": "Poista paketteja"
+            },
+            "data_description": {
+              "add": "Anna Budbeen seuranta- tai tilausnumero aloittaaksesi sen seurannan. Löydät sen toimitusvahvistussähköpostista tai kaupan lähettämästä seurantalinkistä. Sähköpostiosoitetta, jota Budbeen oma seurantasivu kysyy, ei tarvita täällä."
+            }
+          },
+          "delivered": {
+            "name": "Toimitetut paketit",
+            "data": {
+              "delivered_filter_type": "Suodata",
+              "delivered_filter_amount": "Määrä"
+            },
+            "data_description": {
+              "delivered_filter_type": "Näytä viimeisten X päivän aikana toimitetut paketit tai rajoita X viimeisimpään.",
+              "delivered_filter_amount": "Näytettävien päivien tai pakettien määrä."
+            }
+          },
+          "polling": {
+            "name": "Päivitys",
+            "data": {
+              "refresh_interval": "Päivitä joka"
+            },
+            "data_description": {
+              "refresh_interval": "Kuinka usein integraatio tarkistaa Budbeelta pakettipäivitykset. Pidempi väli kuormittaa Budbeen rajapintaa vähemmän; oletusarvo 30 minuuttia riittää useimmille paketeille."
+            }
+          }
+        }
+      }
+    },
+    "error": {
+      "invalid_tracking_code": "Tämä ei näytä Budbeen seurantakoodilta.",
+      "already_tracked": "Tätä pakettia seurataan jo."
+    }
+  },
+  "selector": {
+    "refresh_interval": {
+      "options": {
+        "15": "15 minuuttia",
+        "30": "30 minuuttia",
+        "60": "60 minuuttia",
+        "120": "120 minuuttia",
+        "240": "240 minuuttia"
+      }
+    },
+    "delivered_filter_type": {
+      "options": {
+        "days": "Päivää",
+        "parcels": "Pakettien määrä"
+      }
+    }
+  },
+  "services": {
+    "track_parcel": {
+      "name": "Seuraa pakettia",
+      "description": "Aloita paketin seuranta sen Budbee-seurantakoodilla.",
+      "fields": {
+        "tracking_code": {
+          "name": "Seurantakoodi",
+          "description": "Budbee-seurantakoodi."
+        }
+      }
+    },
+    "untrack_parcel": {
+      "name": "Lopeta paketin seuranta",
+      "description": "Lopeta paketin seuranta sen Budbee-seurantakoodilla.",
+      "fields": {
+        "tracking_code": {
+          "name": "Seurantakoodi",
+          "description": "Budbee-seurantakoodi, jonka seuranta lopetetaan."
+        }
+      }
+    }
+  },
+  "device_automation": {
+    "trigger_type": {
+      "parcel_registered": "Paketti rekisteröitiin",
+      "parcel_status_changed": "Paketin tila muuttui",
+      "parcel_delivered": "Paketti toimitettiin",
+      "parcel_delivery_time_changed": "Paketin arvioitu toimitusaika muuttui",
+      "outgoing_parcel_status_changed": "Lähetetyn paketin tila muuttui",
+      "outgoing_parcel_delivered": "Lähetetty paketti toimitettiin"
+    }
+  },
+  "entity": {
+    "button": {
+      "refresh": {
+        "name": "Päivitä"
+      }
+    },
+    "calendar": {
+      "deliveries": {
+        "name": "Toimitukset"
+      }
+    },
+    "sensor": {
+      "incoming_parcels": {
+        "name": "Saapuvat paketit",
+        "unit_of_measurement": "pakettia"
+      },
+      "next_delivery": {
+        "name": "Seuraava toimitus"
+      },
+      "delivered_parcels": {
+        "name": "Toimitetut paketit",
+        "unit_of_measurement": "pakettia"
+      },
+      "outgoing_parcels": {
+        "name": "Lähtevät paketit",
+        "unit_of_measurement": "pakettia"
+      },
+      "outgoing_delivered_parcels": {
+        "name": "Toimitetut lähtevät paketit",
+        "unit_of_measurement": "pakettia"
+      },
+      "last_update": {
+        "name": "Viimeisin onnistunut päivitys"
+      },
+      "parcel": {
+        "name": "Paketti {barcode}"
+      }
+    }
+  }
+}

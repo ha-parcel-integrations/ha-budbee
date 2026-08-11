@@ -1,0 +1,145 @@
+{
+  "title": "Budbee",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Sett opp Budbee",
+        "description": "Budbee-sporing krever verken konto eller e-postadresse – navet opprettes med én gang. Legg til pakker etterpå via integrasjonens alternativer eller tjenesten `budbee.track_parcel`."
+      }
+    },
+    "abort": {
+      "already_configured": "Budbee er allerede konfigurert."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Budbee-alternativer",
+        "sections": {
+          "parcels": {
+            "name": "Pakker",
+            "data": {
+              "add": "Legg til en pakke",
+              "remove": "Fjern pakker"
+            },
+            "data_description": {
+              "add": "Skriv inn Budbees spor- eller ordrenummer for å begynne å spore den. Du finner det i leveringsbekreftelsen på e-post eller på sporingslenken butikken sendte. E-postadressen som Budbees egen sporingsside spør om, trengs ikke her."
+            }
+          },
+          "delivered": {
+            "name": "Leverte pakker",
+            "data": {
+              "delivered_filter_type": "Filtrer etter",
+              "delivered_filter_amount": "Antall"
+            },
+            "data_description": {
+              "delivered_filter_type": "Vis leverte pakker fra de siste X dagene, eller begrens til de X siste.",
+              "delivered_filter_amount": "Antall dager eller pakker som skal vises."
+            }
+          },
+          "polling": {
+            "name": "Oppdatering",
+            "data": {
+              "refresh_interval": "Oppdater hver"
+            },
+            "data_description": {
+              "refresh_interval": "Hvor ofte integrasjonen sjekker Budbee for pakkeoppdateringer. Et lengre intervall er skånsomt mot Budbees API; standardverdien på 30 minutter er mer enn nok for de fleste pakker."
+            }
+          }
+        }
+      }
+    },
+    "error": {
+      "invalid_tracking_code": "Det ser ikke ut som en Budbee-sporingskode.",
+      "already_tracked": "Den pakken spores allerede."
+    }
+  },
+  "selector": {
+    "refresh_interval": {
+      "options": {
+        "15": "15 minutter",
+        "30": "30 minutter",
+        "60": "60 minutter",
+        "120": "120 minutter",
+        "240": "240 minutter"
+      }
+    },
+    "delivered_filter_type": {
+      "options": {
+        "days": "Dager",
+        "parcels": "Antall pakker"
+      }
+    }
+  },
+  "services": {
+    "track_parcel": {
+      "name": "Spor pakke",
+      "description": "Begynn å spore en pakke med Budbee-sporingskoden.",
+      "fields": {
+        "tracking_code": {
+          "name": "Sporingskode",
+          "description": "Budbee-sporingskoden."
+        }
+      }
+    },
+    "untrack_parcel": {
+      "name": "Slutt å spore pakke",
+      "description": "Slutt å spore en pakke med Budbee-sporingskoden.",
+      "fields": {
+        "tracking_code": {
+          "name": "Sporingskode",
+          "description": "Budbee-sporingskoden det skal sluttes å spore."
+        }
+      }
+    }
+  },
+  "device_automation": {
+    "trigger_type": {
+      "parcel_registered": "En pakke ble registrert",
+      "parcel_status_changed": "En pakkes status endret seg",
+      "parcel_delivered": "En pakke ble levert",
+      "parcel_delivery_time_changed": "En pakkes forventede leveringstid endret seg",
+      "outgoing_parcel_status_changed": "En sendt pakkes status endret seg",
+      "outgoing_parcel_delivered": "En sendt pakke ble levert"
+    }
+  },
+  "entity": {
+    "button": {
+      "refresh": {
+        "name": "Oppdater"
+      }
+    },
+    "calendar": {
+      "deliveries": {
+        "name": "Leveringer"
+      }
+    },
+    "sensor": {
+      "incoming_parcels": {
+        "name": "Innkommende pakker",
+        "unit_of_measurement": "pakker"
+      },
+      "next_delivery": {
+        "name": "Neste levering"
+      },
+      "delivered_parcels": {
+        "name": "Leverte pakker",
+        "unit_of_measurement": "pakker"
+      },
+      "outgoing_parcels": {
+        "name": "Utgående pakker",
+        "unit_of_measurement": "pakker"
+      },
+      "outgoing_delivered_parcels": {
+        "name": "Leverte utgående pakker",
+        "unit_of_measurement": "pakker"
+      },
+      "last_update": {
+        "name": "Siste vellykkede oppdatering"
+      },
+      "parcel": {
+        "name": "Pakke {barcode}"
+      }
+    }
+  }
+}
