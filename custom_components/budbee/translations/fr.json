@@ -1,0 +1,145 @@
+{
+  "title": "Budbee",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configurer Budbee",
+        "description": "Le suivi Budbee ne nécessite ni compte ni adresse e-mail — le hub est créé immédiatement. Vous ajoutez les colis ensuite via les options de l'intégration ou le service `budbee.track_parcel`."
+      }
+    },
+    "abort": {
+      "already_configured": "Budbee est déjà configuré."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options Budbee",
+        "sections": {
+          "parcels": {
+            "name": "Colis",
+            "data": {
+              "add": "Ajouter un colis",
+              "remove": "Supprimer des colis"
+            },
+            "data_description": {
+              "add": "Saisissez le numéro de suivi ou de commande Budbee pour commencer à suivre ce colis. Vous le trouvez dans l'e-mail de confirmation d'expédition ou sur le lien de suivi envoyé par la boutique. L'adresse e-mail demandée par la page de suivi de Budbee n'est pas nécessaire ici."
+            }
+          },
+          "delivered": {
+            "name": "Colis livrés",
+            "data": {
+              "delivered_filter_type": "Filtrer par",
+              "delivered_filter_amount": "Quantité"
+            },
+            "data_description": {
+              "delivered_filter_type": "Afficher les colis livrés des X derniers jours, ou se limiter aux X plus récents.",
+              "delivered_filter_amount": "Nombre de jours ou de colis à afficher."
+            }
+          },
+          "polling": {
+            "name": "Actualisation",
+            "data": {
+              "refresh_interval": "Actualiser toutes les"
+            },
+            "data_description": {
+              "refresh_interval": "Fréquence à laquelle l'intégration interroge Budbee pour les mises à jour des colis. Un intervalle plus lent est plus doux pour l'API de Budbee ; la valeur par défaut de 30 minutes suffit pour la plupart des colis."
+            }
+          }
+        }
+      }
+    },
+    "error": {
+      "invalid_tracking_code": "Cela ne ressemble pas à un code de suivi Budbee.",
+      "already_tracked": "Ce colis est déjà suivi."
+    }
+  },
+  "selector": {
+    "refresh_interval": {
+      "options": {
+        "15": "15 minutes",
+        "30": "30 minutes",
+        "60": "60 minutes",
+        "120": "120 minutes",
+        "240": "240 minutes"
+      }
+    },
+    "delivered_filter_type": {
+      "options": {
+        "days": "Jours",
+        "parcels": "Nombre de colis"
+      }
+    }
+  },
+  "services": {
+    "track_parcel": {
+      "name": "Suivre un colis",
+      "description": "Commence à suivre un colis par son code de suivi Budbee.",
+      "fields": {
+        "tracking_code": {
+          "name": "Code de suivi",
+          "description": "Le code de suivi Budbee."
+        }
+      }
+    },
+    "untrack_parcel": {
+      "name": "Ne plus suivre un colis",
+      "description": "Arrête de suivre un colis par son code de suivi Budbee.",
+      "fields": {
+        "tracking_code": {
+          "name": "Code de suivi",
+          "description": "Le code de suivi Budbee à ne plus suivre."
+        }
+      }
+    }
+  },
+  "device_automation": {
+    "trigger_type": {
+      "parcel_registered": "Un colis a été enregistré",
+      "parcel_status_changed": "Le statut d'un colis a changé",
+      "parcel_delivered": "Un colis a été livré",
+      "parcel_delivery_time_changed": "L'heure de livraison prévue d'un colis a changé",
+      "outgoing_parcel_status_changed": "Le statut d'un colis envoyé a changé",
+      "outgoing_parcel_delivered": "Un colis envoyé a été livré"
+    }
+  },
+  "entity": {
+    "button": {
+      "refresh": {
+        "name": "Actualiser"
+      }
+    },
+    "calendar": {
+      "deliveries": {
+        "name": "Livraisons"
+      }
+    },
+    "sensor": {
+      "incoming_parcels": {
+        "name": "Colis entrants",
+        "unit_of_measurement": "colis"
+      },
+      "next_delivery": {
+        "name": "Prochaine livraison"
+      },
+      "delivered_parcels": {
+        "name": "Colis livrés",
+        "unit_of_measurement": "colis"
+      },
+      "outgoing_parcels": {
+        "name": "Colis sortants",
+        "unit_of_measurement": "colis"
+      },
+      "outgoing_delivered_parcels": {
+        "name": "Colis sortants livrés",
+        "unit_of_measurement": "colis"
+      },
+      "last_update": {
+        "name": "Dernière mise à jour réussie"
+      },
+      "parcel": {
+        "name": "Colis {barcode}"
+      }
+    }
+  }
+}
