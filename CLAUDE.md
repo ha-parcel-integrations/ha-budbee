@@ -34,7 +34,7 @@ you act in one of these areas:
 
 ## Carrier-specific notes
 
-**API mechanics live in `carrier-research/api/budbee/` (private research repo)** —
+**API mechanics live in `carrier-research/budbee/api/` (private research repo)** —
 the two read routes, the envelope, both status vocabularies and the payload→
 canonical mapping. Do not duplicate them here.
 
@@ -110,7 +110,7 @@ canonical mapping. Do not duplicate them here.
   **Retired in 0.10.0:** the "first collected locker parcel" WARNING (did
   `deliveredAt` mean drop or collection?) — confirmed live 2026-08-08 as the
   collection timestamp, not the drop; see
-  `carrier-research/api/budbee/tracking.md`.
+  `carrier-research/budbee/api/tracking.md`.
 - **Redaction is stricter than elsewhere.** Besides the recipient, the payload
   carries locker coordinates and — on a door delivery — `identification.code`
   and `deliveryPinCode`. Those are physical access codes; a diagnostics file
@@ -162,5 +162,5 @@ python -m pytest tests/ --cov=custom_components.budbee
 
 Coverage must stay **above 95%** (silver `test-coverage` rule). Run before
 committing. A code change updates the README + this file + `docs/` in the same
-commit; the API reference lives in this carrier's directory under the private
-`carrier-research/api/`, never in this repo.
+commit; the API reference lives in the `api/` subfolder of this carrier's
+directory under the private `carrier-research/budbee/`, never in this repo.
