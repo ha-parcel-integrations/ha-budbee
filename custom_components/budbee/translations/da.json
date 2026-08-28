@@ -46,6 +46,25 @@
               "refresh_interval": "Hvor ofte integrationen tjekker Budbee for pakkeopdateringer. Et længere interval er skånsommere for Budbees API; standardværdien på 30 minutter er rigeligt for de fleste pakker."
             }
           }
+        },
+        "menu_options": {
+          "parcels": "Pakker",
+          "settings": "Indstillinger"
+        }
+      },
+      "parcels": {
+        "title": "Pakker",
+        "data": {
+          "tracking_codes": "Sporingskoder"
+        }
+      },
+      "settings": {
+        "title": "Indstillinger",
+        "data": {
+          "delivered_filter_type": "Leverede pakker: filtrer efter",
+          "delivered_filter_amount": "Leverede pakker: antal",
+          "include_history": "Medtag statushistorik",
+          "refresh_interval": "Opdater hver"
         }
       }
     },

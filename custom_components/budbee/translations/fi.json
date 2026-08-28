@@ -46,6 +46,25 @@
               "refresh_interval": "Kuinka usein integraatio tarkistaa Budbeelta pakettipäivitykset. Pidempi väli kuormittaa Budbeen rajapintaa vähemmän; oletusarvo 30 minuuttia riittää useimmille paketeille."
             }
           }
+        },
+        "menu_options": {
+          "parcels": "Paketit",
+          "settings": "Asetukset"
+        }
+      },
+      "parcels": {
+        "title": "Paketit",
+        "data": {
+          "tracking_codes": "Seurantakoodit"
+        }
+      },
+      "settings": {
+        "title": "Asetukset",
+        "data": {
+          "delivered_filter_type": "Toimitetut paketit: suodata perusteella",
+          "delivered_filter_amount": "Toimitetut paketit: määrä",
+          "include_history": "Sisällytä tilahistoria",
+          "refresh_interval": "Päivitä joka"
         }
       }
     },
