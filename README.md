@@ -44,7 +44,7 @@ Part of the [ha-parcel-integrations](https://github.com/ha-parcel-integrations) 
 
 ## Requirements
 
-- Home Assistant 2024.7 or newer
+- Home Assistant 2024.12 or newer
 - A Budbee parcel and its tracking or order number, from the shipping
   confirmation or the tracking link the shop sent you — no account and no
   e-mail address needed
@@ -98,6 +98,12 @@ Standard HA removal applies: **Settings → Devices & Services → Budbee → �
 | `sensor.budbee_last_successful_update` | Diagnostic: when Budbee was last polled successfully |
 
 A delivered parcel moves from its per-parcel sensor to the delivered sensor automatically.
+
+A **`calendar.budbee_deliveries`** entity shows expected delivery dates for
+active parcels — read-only, no extra API calls.
+
+A **`button.budbee_refresh`** entity forces an immediate poll, without waiting
+for the next scheduled interval.
 
 ## Parcel status reference
 
