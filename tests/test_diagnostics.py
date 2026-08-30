@@ -17,9 +17,15 @@ async def test_diagnostics_redacts_and_counts(hass):
     entry.runtime_data.coordinator.delivered = []
     entry.runtime_data.coordinator.outgoing = []
     entry.runtime_data.coordinator.delivered_outgoing = []
+    entry.runtime_data.coordinator.current_tier_minutes = 45
+    entry.runtime_data.coordinator.update_interval = None
 
     result = await async_get_config_entry_diagnostics(hass, entry)
 
+    assert result["polling"] == {
+        "current_tier_minutes": 45,
+        "update_interval_seconds": None,
+    }
     assert result["counts"] == {
         "incoming_active": 1,
         "delivered": 0,
@@ -58,6 +64,8 @@ async def test_diagnostics_redacts_physical_access_codes(hass):
     entry.runtime_data.coordinator.delivered = []
     entry.runtime_data.coordinator.outgoing = []
     entry.runtime_data.coordinator.delivered_outgoing = []
+    entry.runtime_data.coordinator.current_tier_minutes = None
+    entry.runtime_data.coordinator.update_interval = None
 
     result = await async_get_config_entry_diagnostics(hass, entry)
 
@@ -67,3 +75,24 @@ async def test_diagnostics_redacts_physical_access_codes(hass):
     assert payload["identificationAtLocker"] == redacted
     assert payload["deliveryPinCode"] == redacted
     assert payload["identification"] == redacted
+
+
+async def test_diagnostics_reports_the_update_interval_in_seconds(hass):
+    """A fixed/auto interval must serialise as plain seconds, not a timedelta."""
+    from datetime import timedelta
+
+    entry = MagicMock()
+    entry.options = {}
+    entry.runtime_data.coordinator.data = []
+    entry.runtime_data.coordinator.delivered = []
+    entry.runtime_data.coordinator.outgoing = []
+    entry.runtime_data.coordinator.delivered_outgoing = []
+    entry.runtime_data.coordinator.current_tier_minutes = 15
+    entry.runtime_data.coordinator.update_interval = timedelta(minutes=15)
+
+    result = await async_get_config_entry_diagnostics(hass, entry)
+
+    assert result["polling"] == {
+        "current_tier_minutes": 15,
+        "update_interval_seconds": 900.0,
+    }

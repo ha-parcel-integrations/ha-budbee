@@ -43,7 +43,7 @@
               "refresh_interval": "Päivitä joka"
             },
             "data_description": {
-              "refresh_interval": "Kuinka usein integraatio tarkistaa Budbeelta pakettipäivitykset. Pidempi väli kuormittaa Budbeen rajapintaa vähemmän; oletusarvo 30 minuuttia riittää useimmille paketeille."
+              "refresh_interval": "Kuinka usein integraatio tarkistaa Budbeelta pakettipäivitykset. \"Automaattinen\" (uusien asennusten oletusarvo) nopeutuu odotetun toimituksen lähestyessä ja hidastuu yöllä; kiinteä väli sen sijaan päivittää samalla vakionopeudella ympäri vuorokauden."
             }
           }
         },
@@ -76,6 +76,7 @@
   "selector": {
     "refresh_interval": {
       "options": {
+        "auto": "Automaattinen (suositeltu)",
         "15": "15 minuuttia",
         "30": "30 minuuttia",
         "60": "60 minuuttia",

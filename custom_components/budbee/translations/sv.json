@@ -43,7 +43,7 @@
               "refresh_interval": "Uppdatera var"
             },
             "data_description": {
-              "refresh_interval": "Hur ofta integrationen kontrollerar Budbee för paketuppdateringar. Ett längre intervall är skonsammare mot Budbees API; standardvärdet på 30 minuter räcker gott för de flesta paket."
+              "refresh_interval": "Hur ofta integrationen kontrollerar Budbee för paketuppdateringar. \"Automatiskt\" (standard för nya installationer) uppdaterar snabbare kring en förväntad leverans och långsammare på natten; ett fast intervall uppdaterar i stället i samma takt dygnet runt."
             }
           }
         },
@@ -76,6 +76,7 @@
   "selector": {
     "refresh_interval": {
       "options": {
+        "auto": "Automatiskt (rekommenderas)",
         "15": "15 minuter",
         "30": "30 minuter",
         "60": "60 minuter",
