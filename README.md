@@ -78,16 +78,14 @@ Open **Configure** on the integration entry:
 |---|---|---|---|
 | Parcels | Add / remove | — | Manage the tracked tracking codes. Changes apply immediately, no restart. |
 | Delivered parcels | Filter by / amount | last 7 days | How long delivered parcels stay visible on the delivered sensor. |
-| Polling | Refresh every | Automatic | How often Budbee is checked: **Automatic**, or a fixed **15 / 30 / 60 / 120 / 240 minutes**. New hubs default to Automatic; existing hubs keep their current fixed value until changed. Changes apply immediately, no HA restart needed. See [Dynamic polling](#dynamic-polling) below. |
 
 There is no *parcel history* option here, unlike the other integrations in the family: Budbee publishes no event timeline, so every parcel's `history` attribute is `null`.
 
 ## Dynamic polling
 
-You can set **Refresh every** to **Automatic** instead of a fixed number of
-minutes. Instead of polling Budbee at the same rate around the clock, the
-integration adjusts its own cadence to what your tracked parcels — sent and
-received — are actually doing:
+Instead of polling Budbee at the same rate around the clock, the integration
+adjusts its own cadence to what your tracked parcels — sent and received —
+are actually doing:
 
 - **Quiet hours** — no polling between 00:00–06:00 local time, aside from one
   catch-up check at each end of that window (around midnight and around 6
@@ -101,12 +99,6 @@ received — are actually doing:
   always triggers an immediate check, regardless of the pause).
 - A small, fixed per-hub offset is added on top, so not every Budbee hub out
   there polls at exactly the same second.
-
-This is opt-in for now, but it's expected to become the default — and
-eventually the only — polling behaviour across the parcel-integrations
-suite. If you try Automatic, we'd genuinely like to hear how it goes:
-share your experience in [this
-discussion](https://github.com/orgs/ha-parcel-integrations/discussions/12).
 
 ## Removal
 

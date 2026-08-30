@@ -36,15 +36,6 @@
               "delivered_filter_type": "Vis leverede pakker fra de sidste X dage, eller begræns til de X seneste.",
               "delivered_filter_amount": "Antal dage eller pakker der skal vises."
             }
-          },
-          "polling": {
-            "name": "Opdatering",
-            "data": {
-              "refresh_interval": "Opdater hver"
-            },
-            "data_description": {
-              "refresh_interval": "Hvor ofte integrationen tjekker Budbee for pakkeopdateringer. \"Automatisk\" (standard for nye installationer) opdaterer hurtigere omkring en forventet levering og langsommere om natten; et fast interval opdaterer med den samme hastighed døgnet rundt i stedet."
-            }
           }
         },
         "menu_options": {
@@ -63,8 +54,7 @@
         "data": {
           "delivered_filter_type": "Leverede pakker: filtrer efter",
           "delivered_filter_amount": "Leverede pakker: antal",
-          "include_history": "Medtag statushistorik",
-          "refresh_interval": "Opdater hver"
+          "include_history": "Medtag statushistorik"
         }
       }
     },
@@ -74,16 +64,6 @@
     }
   },
   "selector": {
-    "refresh_interval": {
-      "options": {
-        "auto": "Automatisk (anbefalet)",
-        "15": "15 minutter",
-        "30": "30 minutter",
-        "60": "60 minutter",
-        "120": "120 minutter",
-        "240": "240 minutter"
-      }
-    },
     "delivered_filter_type": {
       "options": {
         "days": "Dage",

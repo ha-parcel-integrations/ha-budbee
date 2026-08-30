@@ -20,15 +20,10 @@ from .const import (
     CONF_DELIVERED_FILTER_AMOUNT,
     CONF_DELIVERED_FILTER_TYPE,
     CONF_PARCELS,
-    CONF_REFRESH_INTERVAL,
     CONF_TRACKING_CODE,
     DEFAULT_DELIVERED_FILTER_AMOUNT,
     DEFAULT_DELIVERED_FILTER_TYPE,
-    DEFAULT_NEW_REFRESH_INTERVAL,
-    DEFAULT_REFRESH_INTERVAL,
     DOMAIN,
-    REFRESH_INTERVAL_AUTO,
-    REFRESH_INTERVAL_OPTIONS,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -60,17 +55,6 @@ def valid_tracking_code(value: str) -> bool:
 def _current_parcels(entry: ConfigEntry) -> list[dict[str, str]]:
     """Return a mutable copy of the tracked parcels list."""
     return [dict(item) for item in entry.options.get(CONF_PARCELS, [])]
-
-
-def _interval_selector() -> selector.SelectSelector:
-    """Return the refresh-interval dropdown selector (options translated via strings)."""
-    return selector.SelectSelector(
-        selector.SelectSelectorConfig(
-            options=[REFRESH_INTERVAL_AUTO] + [str(m) for m in REFRESH_INTERVAL_OPTIONS],
-            translation_key=CONF_REFRESH_INTERVAL,
-            mode=selector.SelectSelectorMode.DROPDOWN,
-        )
-    )
 
 
 class BudbeeConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -112,11 +96,6 @@ class BudbeeConfigFlow(ConfigFlow, domain=DOMAIN):
                 CONF_PARCELS: [],
                 CONF_DELIVERED_FILTER_TYPE: DEFAULT_DELIVERED_FILTER_TYPE,
                 CONF_DELIVERED_FILTER_AMOUNT: DEFAULT_DELIVERED_FILTER_AMOUNT,
-                # New hubs default to dynamic polling; a hub set up before
-                # this option existed keeps reading DEFAULT_REFRESH_INTERVAL
-                # via the coordinator's .get() fallback instead
-                # (dynamic-polling.md Section 5.2).
-                CONF_REFRESH_INTERVAL: DEFAULT_NEW_REFRESH_INTERVAL,
             },
         )
 
@@ -194,11 +173,6 @@ class BudbeeOptionsFlowHandler(OptionsFlow):
                     CONF_DELIVERED_FILTER_AMOUNT: int(
                         user_input[CONF_DELIVERED_FILTER_AMOUNT]
                     ),
-                    CONF_REFRESH_INTERVAL: (
-                        REFRESH_INTERVAL_AUTO
-                        if user_input[CONF_REFRESH_INTERVAL] == REFRESH_INTERVAL_AUTO
-                        else int(user_input[CONF_REFRESH_INTERVAL])
-                    ),
                 },
             )
 
@@ -230,12 +204,6 @@ class BudbeeOptionsFlowHandler(OptionsFlow):
                             min=1, max=365, step=1, mode=selector.NumberSelectorMode.BOX
                         )
                     ),
-                    vol.Required(
-                        CONF_REFRESH_INTERVAL,
-                        default=str(
-                            current.get(CONF_REFRESH_INTERVAL, DEFAULT_REFRESH_INTERVAL)
-                        ),
-                    ): _interval_selector(),
                 }
             ),
         )

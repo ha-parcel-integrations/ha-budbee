@@ -36,15 +36,6 @@
               "delivered_filter_type": "Näytä viimeisten X päivän aikana toimitetut paketit tai rajoita X viimeisimpään.",
               "delivered_filter_amount": "Näytettävien päivien tai pakettien määrä."
             }
-          },
-          "polling": {
-            "name": "Päivitys",
-            "data": {
-              "refresh_interval": "Päivitä joka"
-            },
-            "data_description": {
-              "refresh_interval": "Kuinka usein integraatio tarkistaa Budbeelta pakettipäivitykset. \"Automaattinen\" (uusien asennusten oletusarvo) nopeutuu odotetun toimituksen lähestyessä ja hidastuu yöllä; kiinteä väli sen sijaan päivittää samalla vakionopeudella ympäri vuorokauden."
-            }
           }
         },
         "menu_options": {
@@ -63,8 +54,7 @@
         "data": {
           "delivered_filter_type": "Toimitetut paketit: suodata perusteella",
           "delivered_filter_amount": "Toimitetut paketit: määrä",
-          "include_history": "Sisällytä tilahistoria",
-          "refresh_interval": "Päivitä joka"
+          "include_history": "Sisällytä tilahistoria"
         }
       }
     },
@@ -74,16 +64,6 @@
     }
   },
   "selector": {
-    "refresh_interval": {
-      "options": {
-        "auto": "Automaattinen (suositeltu)",
-        "15": "15 minuuttia",
-        "30": "30 minuuttia",
-        "60": "60 minuuttia",
-        "120": "120 minuuttia",
-        "240": "240 minuuttia"
-      }
-    },
     "delivered_filter_type": {
       "options": {
         "days": "Päivää",
