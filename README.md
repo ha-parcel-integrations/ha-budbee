@@ -45,7 +45,6 @@ Part of the [ha-parcel-integrations](https://github.com/ha-parcel-integrations) 
 
 ## Requirements
 
-- Home Assistant 2024.12 or newer
 - A Budbee parcel and its tracking or order number, from the shipping
   confirmation or the tracking link the shop sent you — no account and no
   e-mail address needed
