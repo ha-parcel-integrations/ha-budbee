@@ -44,7 +44,7 @@
         }
       },
       "parcels": {
-        "title": "Paketit",
+        "title": "Hallitse paketteja",
         "data": {
           "tracking_codes": "Seurantakoodit"
         }

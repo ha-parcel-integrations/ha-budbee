@@ -44,7 +44,7 @@
         }
       },
       "parcels": {
-        "title": "Paket",
+        "title": "Hantera paket",
         "data": {
           "tracking_codes": "Spårningskoder"
         }
