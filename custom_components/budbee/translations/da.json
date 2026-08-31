@@ -119,6 +119,10 @@
         "name": "Indkommende pakker",
         "unit_of_measurement": "pakker"
       },
+      "awaiting_pickup": {
+        "name": "Klar til afhentning",
+        "unit_of_measurement": "pakker"
+      },
       "next_delivery": {
         "name": "Næste levering"
       },

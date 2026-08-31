@@ -119,6 +119,10 @@
         "name": "Saapuvat paketit",
         "unit_of_measurement": "pakettia"
       },
+      "awaiting_pickup": {
+        "name": "Valmis noudettavaksi",
+        "unit_of_measurement": "paketit"
+      },
       "next_delivery": {
         "name": "Seuraava toimitus"
       },

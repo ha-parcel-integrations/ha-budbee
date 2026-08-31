@@ -119,6 +119,10 @@
         "name": "Colis entrants",
         "unit_of_measurement": "colis"
       },
+      "awaiting_pickup": {
+        "name": "Prêt pour le retrait",
+        "unit_of_measurement": "colis"
+      },
       "next_delivery": {
         "name": "Prochaine livraison"
       },

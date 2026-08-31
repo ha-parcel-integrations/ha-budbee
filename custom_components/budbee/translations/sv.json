@@ -119,6 +119,10 @@
         "name": "Inkommande paket",
         "unit_of_measurement": "paket"
       },
+      "awaiting_pickup": {
+        "name": "Redo för upphämtning",
+        "unit_of_measurement": "paket"
+      },
       "next_delivery": {
         "name": "Nästa leverans"
       },

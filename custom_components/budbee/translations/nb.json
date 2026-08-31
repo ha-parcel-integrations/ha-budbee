@@ -119,6 +119,10 @@
         "name": "Innkommende pakker",
         "unit_of_measurement": "pakker"
       },
+      "awaiting_pickup": {
+        "name": "Klar for henting",
+        "unit_of_measurement": "pakker"
+      },
       "next_delivery": {
         "name": "Neste levering"
       },
