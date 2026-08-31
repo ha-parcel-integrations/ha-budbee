@@ -121,7 +121,7 @@
       },
       "awaiting_pickup": {
         "name": "Valmis noudettavaksi",
-        "unit_of_measurement": "paketit"
+        "unit_of_measurement": "pakettia"
       },
       "next_delivery": {
         "name": "Seuraava toimitus"
