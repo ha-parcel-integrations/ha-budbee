@@ -62,8 +62,7 @@ NEW_ISSUE_URL = (
 #
 # The e-mail Budbee's own tracking page asks for is deliberately not collected:
 # it unmasks the recipient's own name, address and phone in the response and
-# nothing a parcel sensor reads. See CLAUDE.md; the full write-up lives in this
-# carrier's directory under the private ``carrier-research/api/``.
+# nothing a parcel sensor reads. See CLAUDE.md.
 API_BASE = "https://tracking.budbee.com/api"
 META_URL = f"{API_BASE}/v3/orders/{{tracking_code}}/meta"
 BOX_URL = f"{API_BASE}/box/{{tracking_code}}"
@@ -104,8 +103,7 @@ DEFAULT_DELIVERED_FILTER_TYPE = "days"
 DEFAULT_DELIVERED_FILTER_AMOUNT = 7
 
 # Dynamic, status-driven polling — unconditional, no user-facing interval
-# option. See carrier-research/dynamic-polling.md for the full algorithm and
-# the reasoning behind it.
+# option.
 #
 # Quiet window: no polling between these local hours except the two anchors
 # below, for overnight / end-of-day catch-up.
