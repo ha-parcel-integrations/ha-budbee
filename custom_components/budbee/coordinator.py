@@ -67,7 +67,7 @@ def _next_anchor(now: datetime) -> datetime:
 
 
 def _hottest_tier_minutes(active_parcels: list[dict], now: datetime) -> int | None:
-    """Tier for the barcode-based model (dynamic-polling.md Section 2.1).
+    """Tier for the barcode-based model (Section 2.1).
 
     ``None`` means "stop polling entirely" — nothing is tracked, or every
     tracked parcel (incoming and outgoing) is already delivered (already
@@ -286,9 +286,9 @@ class BudbeeCoordinator(DataUpdateCoordinator[list[dict]]):
             self.last_success_time = datetime.now(timezone.utc)
 
         now = dt_util.now()
-        # Hottest status across both directions (dynamic-polling.md
-        # Section 6): a parcel the user is sending out for delivery is just
-        # as "happening in the next hour" as one arriving.
+        # Hottest status across both directions (Section 6): a parcel the
+        # user is sending out for delivery is just as "happening in the next
+        # hour" as one arriving.
         tracked_active = active_in + self.outgoing
         self._current_tier_minutes = _hottest_tier_minutes(tracked_active, now)
         self.update_interval = _next_update_interval(
