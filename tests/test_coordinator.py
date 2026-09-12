@@ -375,10 +375,13 @@ async def test_update_fetches_parcels_concurrently(hass):
 
 async def test_cache_only_poll_does_not_stamp_last_success(hass):
     """A poll served entirely from cache must not look like a success."""
-    entry = _entry_with([{CONF_TRACKING_CODE: DELIVERED_CODE}])
+    # Must still be active (not delivered) — a delivered code is skipped from
+    # the fetch entirely from the next cycle on, which is covered separately
+    # by test_delivered_code_skipped_from_fetch.
+    entry = _entry_with([{CONF_TRACKING_CODE: ACTIVE_CODE}])
     entry.add_to_hass(hass)
     client = AsyncMock()
-    client.async_get_parcel.return_value = _delivered()
+    client.async_get_parcel.return_value = _active()
     coordinator = BudbeeCoordinator(hass, client, entry)
     await coordinator._async_update_data()
     stamp = coordinator.last_success_time
@@ -387,6 +390,48 @@ async def test_cache_only_poll_does_not_stamp_last_success(hass):
     client.async_get_parcel.side_effect = BudbeeApiError("HTTP 500")
     await coordinator._async_update_data()  # served from cache
     assert coordinator.last_success_time == stamp
+
+
+async def test_delivered_code_skipped_from_fetch(hass):
+    """A delivered code stops being fetched from the next cycle on."""
+    entry = _entry_with(
+        [{CONF_TRACKING_CODE: ACTIVE_CODE}, {CONF_TRACKING_CODE: DELIVERED_CODE}]
+    )
+    entry.add_to_hass(hass)
+    client = AsyncMock()
+    client.async_get_parcel.side_effect = lambda code: (
+        _active() if code == ACTIVE_CODE else _delivered()
+    )
+    coordinator = BudbeeCoordinator(hass, client, entry)
+
+    await coordinator._async_update_data()
+    assert client.async_get_parcel.call_count == 2
+    assert coordinator.delivered_codes == {DELIVERED_CODE}
+
+    client.async_get_parcel.reset_mock()
+    data = await coordinator._async_update_data()
+
+    # Only the still-active code is fetched — the delivered one is skipped.
+    client.async_get_parcel.assert_called_once_with(ACTIVE_CODE)
+    assert any(p["barcode"] == DELIVERED_CODE for p in coordinator.delivered)
+    assert data[0]["barcode"] == ACTIVE_CODE
+
+
+async def test_delivered_code_forgotten_when_untracked(hass):
+    """Untracking a delivered code drops it from the skip set too."""
+    entry = _entry_with([{CONF_TRACKING_CODE: DELIVERED_CODE}])
+    entry.add_to_hass(hass)
+    client = AsyncMock()
+    client.forget = MagicMock()  # sync on the real client
+    client.async_get_parcel.return_value = _delivered()
+    coordinator = BudbeeCoordinator(hass, client, entry)
+
+    await coordinator._async_update_data()
+    assert coordinator.delivered_codes == {DELIVERED_CODE}
+
+    hass.config_entries.async_update_entry(entry, options={CONF_PARCELS: []})
+    await coordinator._async_update_data()
+    assert coordinator.delivered_codes == set()
 
 
 # ---------------------------------------------------------------------------

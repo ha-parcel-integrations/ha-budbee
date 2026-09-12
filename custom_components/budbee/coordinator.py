@@ -156,6 +156,12 @@ class BudbeeCoordinator(DataUpdateCoordinator[list[dict]]):
         # dropping its sensor. Lives for the integration's lifetime (resets on
         # restart).
         self._raw_cache: dict[str, dict] = {}
+        # Tracking codes confirmed delivered on a prior refresh (either
+        # direction — a delivered *or* collected parcel's payload can never
+        # change again) — excluded from the fetch this cycle. Keyed on the
+        # code the request was made with, not the barcode. Lives for the
+        # integration's lifetime (resets on restart).
+        self._delivered_codes: set[str] = set()
         # barcode -> last seen ParcelStatus, per direction, and the last seen
         # (planned_from, planned_to). ``None`` on the first refresh so events
         # are suppressed for parcels that already existed when the integration
@@ -183,6 +189,11 @@ class BudbeeCoordinator(DataUpdateCoordinator[list[dict]]):
     def current_tier_minutes(self) -> int | None:
         """Tier minutes computed on the last refresh (diagnostics only)."""
         return self._current_tier_minutes
+
+    @property
+    def delivered_codes(self) -> set[str]:
+        """Tracking codes currently skipped from the fetch (diagnostics only)."""
+        return self._delivered_codes
 
     def _device_id(self) -> str | None:
         """Resolve (and cache) this entry's device id for event payloads."""
@@ -219,15 +230,21 @@ class BudbeeCoordinator(DataUpdateCoordinator[list[dict]]):
             if code not in tracked_codes:
                 del self._raw_cache[code]
                 self._client.forget(code)
+        self._delivered_codes &= tracked_codes
+
+        # A delivered (or collected) parcel's payload can never change again,
+        # so it is dropped from the fetch — not from ``codes``/the options
+        # list, which stays untouched until the user removes it by hand.
+        codes_to_fetch = [code for code in codes if code not in self._delivered_codes]
 
         results = await asyncio.gather(
-            *(self._client.async_get_parcel(code) for code in codes),
+            *(self._client.async_get_parcel(code) for code in codes_to_fetch),
             return_exceptions=True,
         )
 
-        raws: list[dict] = []
+        raws_by_code: dict[str, dict] = {}
         errors = 0
-        for code, result in zip(codes, results):
+        for code, result in zip(codes_to_fetch, results):
             if isinstance(result, BaseException):
                 if not isinstance(
                     result, (BudbeeApiError, aiohttp.ClientError)
@@ -237,28 +254,45 @@ class BudbeeCoordinator(DataUpdateCoordinator[list[dict]]):
                 _LOGGER.warning("Budbee fetch failed for %s: %s", code, result)
                 cached = self._raw_cache.get(code)
                 if cached is not None:
-                    raws.append(cached)
+                    raws_by_code[code] = cached
                 continue
 
             if result is None:
                 # Unknown code, or not handed to Budbee yet. Keep prior data if
                 # we have it, otherwise show a pending placeholder so the user
                 # still sees the parcel they asked us to track.
-                raws.append(self._raw_cache.get(code) or {"token": code})
+                raws_by_code[code] = self._raw_cache.get(code) or {"token": code}
                 continue
 
             # The response's own token can be missing on edge payloads; fall
             # back to the code we asked for so the sensor keeps its key.
             result.setdefault("token", code)
             self._raw_cache[code] = result
-            raws.append(result)
+            raws_by_code[code] = result
 
-        if codes and errors == len(codes) and not raws:
+        # Codes skipped from the fetch above (already confirmed delivered) —
+        # re-add their cached payload so the delivered sensor keeps its data
+        # until the retention filter drops it.
+        for code in self._delivered_codes:
+            cached = self._raw_cache.get(code)
+            if cached is not None:
+                raws_by_code[code] = cached
+
+        if codes_to_fetch and errors == len(codes_to_fetch) and not raws_by_code:
             raise UpdateFailed("Budbee unreachable for all tracked parcels")
 
-        normalized = [(raw, normalize_parcel(raw)) for raw in raws]
-        incoming = [parcel for raw, parcel in normalized if not is_outgoing(raw)]
-        outgoing = [parcel for raw, parcel in normalized if is_outgoing(raw)]
+        entries = [
+            (code, raw, normalize_parcel(raw)) for code, raw in raws_by_code.items()
+        ]
+        incoming = [parcel for _, raw, parcel in entries if not is_outgoing(raw)]
+        outgoing = [parcel for _, raw, parcel in entries if is_outgoing(raw)]
+        # Rebuilt fresh from this cycle's data — a code whose payload just
+        # flipped to delivered is skipped starting next cycle; one that
+        # somehow un-delivers (should not happen, but the fetch list must
+        # never permanently drop a code) rejoins it automatically.
+        self._delivered_codes = {
+            code for code, _, parcel in entries if parcel["delivered"]
+        }
         if outgoing:
             self._report_outgoing()
 
@@ -280,9 +314,9 @@ class BudbeeCoordinator(DataUpdateCoordinator[list[dict]]):
         }
 
         # Only stamp the diagnostic timestamp when at least one fetch actually
-        # succeeded (or nothing is tracked) — a poll served entirely from cache
-        # must not present itself as a successful update.
-        if not codes or errors < len(codes):
+        # succeeded (or nothing needed fetching) — a poll served entirely from
+        # cache must not present itself as a successful update.
+        if not codes_to_fetch or errors < len(codes_to_fetch):
             self.last_success_time = datetime.now(timezone.utc)
 
         now = dt_util.now()

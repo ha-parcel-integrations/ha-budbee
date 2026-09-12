@@ -77,6 +77,7 @@ async def async_get_config_entry_diagnostics(
             "delivered": len(coordinator.delivered or []),
             "outgoing_active": len(coordinator.outgoing or []),
             "outgoing_delivered": len(coordinator.delivered_outgoing or []),
+            "skipped_from_fetch": len(coordinator.delivered_codes),
         },
         "incoming": async_redact_data(coordinator.data or [], TO_REDACT),
         "delivered": async_redact_data(coordinator.delivered or [], TO_REDACT),

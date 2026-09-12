@@ -17,6 +17,7 @@ async def test_diagnostics_redacts_and_counts(hass):
     entry.runtime_data.coordinator.delivered = []
     entry.runtime_data.coordinator.outgoing = []
     entry.runtime_data.coordinator.delivered_outgoing = []
+    entry.runtime_data.coordinator.delivered_codes = set()
     entry.runtime_data.coordinator.current_tier_minutes = 45
     entry.runtime_data.coordinator.update_interval = None
 
@@ -31,6 +32,7 @@ async def test_diagnostics_redacts_and_counts(hass):
         "delivered": 0,
         "outgoing_active": 0,
         "outgoing_delivered": 0,
+        "skipped_from_fetch": 0,
     }
     redacted = "**REDACTED**"
     parcel = result["incoming"][0]
@@ -64,6 +66,7 @@ async def test_diagnostics_redacts_physical_access_codes(hass):
     entry.runtime_data.coordinator.delivered = []
     entry.runtime_data.coordinator.outgoing = []
     entry.runtime_data.coordinator.delivered_outgoing = []
+    entry.runtime_data.coordinator.delivered_codes = set()
     entry.runtime_data.coordinator.current_tier_minutes = None
     entry.runtime_data.coordinator.update_interval = None
 
@@ -87,6 +90,7 @@ async def test_diagnostics_reports_the_update_interval_in_seconds(hass):
     entry.runtime_data.coordinator.delivered = []
     entry.runtime_data.coordinator.outgoing = []
     entry.runtime_data.coordinator.delivered_outgoing = []
+    entry.runtime_data.coordinator.delivered_codes = set()
     entry.runtime_data.coordinator.current_tier_minutes = 15
     entry.runtime_data.coordinator.update_interval = timedelta(minutes=15)
 
