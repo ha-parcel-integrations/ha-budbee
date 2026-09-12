@@ -20,11 +20,10 @@ def test_normalize_tracking_code_strips_and_uppercases():
     assert normalize_tracking_code(None) == ""
 
 
-def test_valid_tracking_code_bounds():
-    """Deliberately wide: one 12-character sample is not a format."""
+def test_valid_tracking_code_accepts_any_nonempty():
     assert valid_tracking_code("BUDBEE123456")
-    assert not valid_tracking_code("ABC")  # too short
-    assert not valid_tracking_code("A" * 41)  # too long
+    assert valid_tracking_code("ABC")
+    assert not valid_tracking_code("")
 
 
 async def test_user_flow_creates_hub_without_input(hass):

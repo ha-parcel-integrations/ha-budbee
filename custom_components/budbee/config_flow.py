@@ -28,14 +28,6 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-# Budbee's own tracking page validates nothing — it posts whatever you type —
-# and the one order number we have seen is 12 upper-case alphanumerics. One
-# sample is not a format, so this stays deliberately wide: a rejected valid
-# code is far more annoying than a bad one, which simply reports "not found"
-# on the next poll. It is also what the ``track_parcel`` service and the
-# e-mail-parsing example automation validate against.
-_TRACKING_CODE_RE = re.compile(r"^[A-Z0-9]{4,40}$")
-
 
 def normalize_tracking_code(value: str) -> str:
     """Return the tracking code upper-cased with separators stripped.
@@ -48,8 +40,8 @@ def normalize_tracking_code(value: str) -> str:
 
 
 def valid_tracking_code(value: str) -> bool:
-    """Whether ``value`` looks like a Budbee tracking code."""
-    return bool(_TRACKING_CODE_RE.match(value))
+    """Accept every non-empty code; a bad one simply reports "not found" on the next poll."""
+    return bool(value)
 
 
 def _current_parcels(entry: ConfigEntry) -> list[dict[str, str]]:
