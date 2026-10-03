@@ -135,7 +135,7 @@
         "unit_of_measurement": "paket"
       },
       "outgoing_delivered_parcels": {
-        "name": "Levererade utgående paket",
+        "name": "Utgående levererade paket",
         "unit_of_measurement": "paket"
       },
       "last_update": {
