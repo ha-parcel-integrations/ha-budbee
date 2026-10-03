@@ -135,7 +135,7 @@
         "unit_of_measurement": "pakettia"
       },
       "outgoing_delivered_parcels": {
-        "name": "Toimitetut lähtevät paketit",
+        "name": "Lähtevät toimitetut paketit",
         "unit_of_measurement": "pakettia"
       },
       "last_update": {
