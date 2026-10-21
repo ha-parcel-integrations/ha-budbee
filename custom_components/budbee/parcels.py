@@ -518,7 +518,9 @@ def normalize_parcel(raw: dict) -> dict:
         # Reconstructed from Budbee's own tracking client; no door delivery has
         # been seen on the wire yet.
         tracking_code = raw.get("token")
-        status_block = raw.get("status") if isinstance(raw.get("status"), dict) else {}
+        status_block = raw.get("status")
+        if not isinstance(status_block, dict):
+            status_block = {}
         delivered_at = to_iso_timestamp(status_block.get("date")) if delivered else None
         consignment = raw.get("consignment") or {}
         planned_from = to_iso_timestamp(consignment.get("start"))

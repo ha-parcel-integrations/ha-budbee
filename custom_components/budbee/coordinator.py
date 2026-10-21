@@ -128,6 +128,8 @@ class BudbeeCoordinator(DataUpdateCoordinator[list[dict]]):
     the user is *sending* (a return or an on-demand pickup).
     """
 
+    config_entry: ConfigEntry
+
     def __init__(
         self,
         hass: HomeAssistant,
