@@ -13,10 +13,11 @@ in a locker* on a locker order. The order type comes from the keyless ``meta``
 call the API client merges into every payload; when it is missing or new, the
 payload's own shape decides.
 """
+
 from __future__ import annotations
 
+from datetime import UTC, datetime, timedelta
 import logging
-from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
@@ -90,29 +91,73 @@ _STATUS_MAP_BOX: dict[str, ParcelStatus] = {
 # exactly what this integration is missing.
 _KNOWN_BOX_KEYS = frozenset(
     {
-        "authorized", "token", "createdAt", "timeZone", "status",
-        "pickedUpFromMerchant", "deliveredAt", "latestPickupDate", "eta",
-        "etaInformation", "orderLocation", "consignment", "recall", "returns",
-        "merchant", "lockerIdentifier", "lockerAddress", "lockerAttributes",
+        "authorized",
+        "token",
+        "createdAt",
+        "timeZone",
+        "status",
+        "pickedUpFromMerchant",
+        "deliveredAt",
+        "latestPickupDate",
+        "eta",
+        "etaInformation",
+        "orderLocation",
+        "consignment",
+        "recall",
+        "returns",
+        "merchant",
+        "lockerIdentifier",
+        "lockerAddress",
+        "lockerAttributes",
         # Reported by a live locker order on 2026-08-04, alongside the
         # duplicated ``openHours`` — a locker attribute, nothing canonical.
         "lockerBrands",
-        "openHours", "demand", "consumer", "consumerAddress",
-        "identificationAtLocker", "rating", "campaign", "nudges",
-        "canSwitchDeliveryType", "canSwitchLocker", "canExtendPickupTime",
+        "openHours",
+        "demand",
+        "consumer",
+        "consumerAddress",
+        "identificationAtLocker",
+        "rating",
+        "campaign",
+        "nudges",
+        "canSwitchDeliveryType",
+        "canSwitchLocker",
+        "canExtendPickupTime",
         # merged in by the API client, not part of the carrier's own body
         "meta",
     }
 )
 _KNOWN_DELIVERY_KEYS = frozenset(
     {
-        "token", "createdAt", "timeZone", "status", "consignment", "routedEta",
-        "eta", "merchant", "consumer", "address", "driver", "lockerAttributes",
-        "orderLocation", "identification", "deliveryPinCode", "settings",
-        "deliverySettings", "parcelDeliveryOverview", "returns", "recall",
-        "nudges", "cancellation", "latestPickupDate", "deliveryOptions",
-        "externalLinks", "allowedToBookDelivery", "canSwitchDeliveryType",
-        "canSwitchLocker", "canExtendPickupTime",
+        "token",
+        "createdAt",
+        "timeZone",
+        "status",
+        "consignment",
+        "routedEta",
+        "eta",
+        "merchant",
+        "consumer",
+        "address",
+        "driver",
+        "lockerAttributes",
+        "orderLocation",
+        "identification",
+        "deliveryPinCode",
+        "settings",
+        "deliverySettings",
+        "parcelDeliveryOverview",
+        "returns",
+        "recall",
+        "nudges",
+        "cancellation",
+        "latestPickupDate",
+        "deliveryOptions",
+        "externalLinks",
+        "allowedToBookDelivery",
+        "canSwitchDeliveryType",
+        "canSwitchLocker",
+        "canExtendPickupTime",
         "meta",
     }
 )
@@ -139,7 +184,8 @@ def _warn_once(key: str, message: str, *args: Any) -> None:
     if key in _warned:
         return
     _warned.add(key)
-    _LOGGER.warning(message + "\n  Please report it: %s", *args, NEW_ISSUE_URL)
+    # ``message`` is itself the format string; its placeholders take ``args``.
+    _LOGGER.warning(message + "\n  Please report it: %s", *args, NEW_ISSUE_URL)  # noqa: G003
 
 
 def _warn_unmapped_status(order_type: str, code: str) -> None:
@@ -287,7 +333,9 @@ def order_type(raw: dict) -> str:
         reported = meta.get("type")
         if reported in (ORDER_TYPE_BOX, ORDER_TYPE_DELIVERY):
             return str(reported)
-    return ORDER_TYPE_DELIVERY if isinstance(raw.get("status"), dict) else ORDER_TYPE_BOX
+    return (
+        ORDER_TYPE_DELIVERY if isinstance(raw.get("status"), dict) else ORDER_TYPE_BOX
+    )
 
 
 def map_parcel_status(code: str | None, order: str = ORDER_TYPE_BOX) -> ParcelStatus:
@@ -298,9 +346,7 @@ def map_parcel_status(code: str | None, order: str = ORDER_TYPE_BOX) -> ParcelSt
     """
     if not code:
         return ParcelStatus.UNKNOWN
-    status_map = (
-        _STATUS_MAP_BOX if order == ORDER_TYPE_BOX else _STATUS_MAP_DELIVERY
-    )
+    status_map = _STATUS_MAP_BOX if order == ORDER_TYPE_BOX else _STATUS_MAP_DELIVERY
     mapped = status_map.get(code)
     if mapped is not None:
         return mapped
@@ -317,11 +363,11 @@ def parse_iso(value: str | None) -> datetime | None:
     if not value:
         return None
     try:
-        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        parsed = datetime.fromisoformat(str(value))
     except ValueError:
         return None
     if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
+        parsed = parsed.replace(tzinfo=UTC)
     return parsed
 
 
@@ -337,7 +383,7 @@ def to_iso_timestamp(value: Any) -> str | None:
         return None
     if isinstance(value, (int, float)):
         try:
-            return datetime.fromtimestamp(value / 1000, tz=timezone.utc).isoformat()
+            return datetime.fromtimestamp(value / 1000, tz=UTC).isoformat()
         except (OverflowError, OSError, ValueError):
             return None
     return str(value)
@@ -544,14 +590,12 @@ def apply_delivered_filter(parcels: list[dict], entry: ConfigEntry) -> list[dict
     shows.
     """
     options = entry.options
-    filter_type = options.get(
-        CONF_DELIVERED_FILTER_TYPE, DEFAULT_DELIVERED_FILTER_TYPE
-    )
+    filter_type = options.get(CONF_DELIVERED_FILTER_TYPE, DEFAULT_DELIVERED_FILTER_TYPE)
     amount = int(
         options.get(CONF_DELIVERED_FILTER_AMOUNT, DEFAULT_DELIVERED_FILTER_AMOUNT)
     )
     if filter_type == "days":
-        cutoff = datetime.now(timezone.utc) - timedelta(days=amount)
+        cutoff = datetime.now(UTC) - timedelta(days=amount)
         return [
             parcel
             for parcel in parcels

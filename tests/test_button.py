@@ -1,4 +1,5 @@
 """Tests for the Budbee refresh button."""
+
 from unittest.mock import AsyncMock, MagicMock
 
 from custom_components.budbee.button import BudbeeRefreshButton

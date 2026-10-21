@@ -4,12 +4,13 @@ Fetching and event firing only — the parcel mapping lives in :mod:`.parcels`.
 That split is what lets the account-based variant swap this file out without
 duplicating the mapping code.
 """
+
 from __future__ import annotations
 
 import asyncio
+from datetime import UTC, datetime, timedelta
 import hashlib
 import logging
-from datetime import datetime, timedelta, timezone
 
 import aiohttp
 from homeassistant.config_entries import ConfigEntry
@@ -60,10 +61,9 @@ def _next_anchor(now: datetime) -> datetime:
     )
     if now < six_today:
         return six_today
-    midnight_tomorrow = (now + timedelta(days=1)).replace(
+    return (now + timedelta(days=1)).replace(
         hour=QUIET_WINDOW_START_HOUR, minute=0, second=0, microsecond=0
     )
-    return midnight_tomorrow
 
 
 def _hottest_tier_minutes(active_parcels: list[dict], now: datetime) -> int | None:
@@ -169,9 +169,9 @@ class BudbeeCoordinator(DataUpdateCoordinator[list[dict]]):
         # "registered" notifications.
         self._known_state: dict[str, ParcelStatus] | None = None
         self._known_outgoing_state: dict[str, ParcelStatus] | None = None
-        self._known_delivery_times: (
-            dict[str, tuple[str | None, str | None]] | None
-        ) = None
+        self._known_delivery_times: dict[str, tuple[str | None, str | None]] | None = (
+            None
+        )
         # Cached device id, attached to every fired event so device-trigger
         # automations can filter to this device.
         self._cached_device_id: str | None = None
@@ -244,11 +244,9 @@ class BudbeeCoordinator(DataUpdateCoordinator[list[dict]]):
 
         raws_by_code: dict[str, dict] = {}
         errors = 0
-        for code, result in zip(codes_to_fetch, results):
+        for code, result in zip(codes_to_fetch, results, strict=True):
             if isinstance(result, BaseException):
-                if not isinstance(
-                    result, (BudbeeApiError, aiohttp.ClientError)
-                ):
+                if not isinstance(result, (BudbeeApiError, aiohttp.ClientError)):
                     raise result
                 errors += 1
                 _LOGGER.warning("Budbee fetch failed for %s: %s", code, result)
@@ -317,7 +315,7 @@ class BudbeeCoordinator(DataUpdateCoordinator[list[dict]]):
         # succeeded (or nothing needed fetching) — a poll served entirely from
         # cache must not present itself as a successful update.
         if not codes_to_fetch or errors < len(codes_to_fetch):
-            self.last_success_time = datetime.now(timezone.utc)
+            self.last_success_time = datetime.now(UTC)
 
         now = dt_util.now()
         # Hottest status across both directions (Section 6): a parcel the

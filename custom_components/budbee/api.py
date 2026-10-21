@@ -30,6 +30,7 @@ merged in under a ``meta`` key (neither read route carries one of its own), so
 the mapping in :mod:`.parcels` can pick the right status map from the same dict
 it normalises, and diagnostics show what the order was routed as.
 """
+
 from __future__ import annotations
 
 import logging
@@ -64,7 +65,8 @@ def _warn_once(key: str, message: str, *args: Any) -> None:
     if key in _warned:
         return
     _warned.add(key)
-    _LOGGER.warning(message + "\n  Please report it: %s", *args, NEW_ISSUE_URL)
+    # ``message`` is itself the format string; its placeholders take ``args``.
+    _LOGGER.warning(message + "\n  Please report it: %s", *args, NEW_ISSUE_URL)  # noqa: G003
 
 
 class BudbeeApiError(Exception):

@@ -4,7 +4,8 @@ These need no Home Assistant instance — the whole point of keeping
 ``parcels.py`` free of I/O is that the carrier-specific mapping (the part you
 rewrite per carrier) can be tested as plain functions.
 """
-from datetime import datetime, timedelta, timezone
+
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
@@ -21,6 +22,7 @@ from custom_components.budbee.const import (
 )
 from custom_components.budbee.parcels import (
     apply_delivered_filter,
+    describe_structure,
     is_outgoing,
     map_parcel_status,
     normalize_parcel,
@@ -83,7 +85,7 @@ def test_order_type_falls_back_to_the_payload_shape():
 
 
 @pytest.mark.parametrize(
-    "code,expected",
+    ("code", "expected"),
     [
         ("NotStarted", ParcelStatus.REGISTERED),
         ("OnRouteCollection", ParcelStatus.IN_TRANSIT),
@@ -103,7 +105,7 @@ def test_delivery_status_map_is_complete(code, expected):
 
 
 @pytest.mark.parametrize(
-    "code,expected",
+    ("code", "expected"),
     [
         ("NotStarted", ParcelStatus.REGISTERED),
         ("Pending", ParcelStatus.REGISTERED),
@@ -158,7 +160,7 @@ def test_unmapped_status_warns_once_per_order_type(caplog):
 def test_parse_iso_handles_z_naive_and_garbage():
     assert parse_iso("2026-04-29T13:12:42Z").tzinfo is not None
     # A naive value is assumed UTC so mixed lists still sort.
-    assert parse_iso("2026-04-29T13:12:42").tzinfo == timezone.utc
+    assert parse_iso("2026-04-29T13:12:42").tzinfo == UTC
     assert parse_iso("not-a-date") is None
     assert parse_iso(None) is None
 
@@ -358,7 +360,7 @@ def test_capabilities_match_the_locker_and_window_support():
     """CAPABILITIES must agree with test_normalize_locker_name_falls_back_to_the_address
     and test_normalize_delivery_order_has_the_consignment_window — Budbee never
     exposes weight/dimensions/history."""
-    assert CAPABILITIES == {"delivery_window", "pickup_point", "url"}
+    assert {"delivery_window", "pickup_point", "url"} == CAPABILITIES
 
 
 def test_normalize_pending_placeholder():
@@ -427,7 +429,7 @@ def _entry(filter_type: str, amount: int) -> MockConfigEntry:
 
 
 def _delivered_pair() -> list[dict]:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     return [
         {"barcode": "RECENT", "delivered_at": (now - timedelta(days=1)).isoformat()},
         {"barcode": "OLD", "delivered_at": (now - timedelta(days=30)).isoformat()},
@@ -547,8 +549,6 @@ def test_structure_report_fires_again_for_a_different_shape(caplog):
 
 
 def test_structure_report_describes_lists_by_their_first_element():
-    from custom_components.budbee.parcels import describe_structure
-
     lines = describe_structure({"events": [{"date": "x", "n": 1}], "empty": []})
     assert "events[].date: str" in lines
     assert "events[].n: int" in lines
@@ -556,8 +556,6 @@ def test_structure_report_describes_lists_by_their_first_element():
 
 
 def test_structure_report_stops_at_the_depth_cap():
-    from custom_components.budbee.parcels import describe_structure
-
     deep: dict = {"a": {"b": {"c": {"d": {"e": {"f": {"g": 1}}}}}}}
     assert any("nested deeper than" in line for line in describe_structure(deep))
 

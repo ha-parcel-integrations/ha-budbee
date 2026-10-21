@@ -12,6 +12,7 @@ own mapping, not as proof of the carrier's shape.
 Kept in one module rather than inline in each test: when the payload turns out
 to differ from what we assumed, there is then exactly one place to fix.
 """
+
 from __future__ import annotations
 
 ACTIVE_CODE = "BUDBEE999999"

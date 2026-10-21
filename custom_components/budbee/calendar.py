@@ -1,4 +1,5 @@
 """Calendar platform for the Budbee parcel tracker integration."""
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta
@@ -20,14 +21,15 @@ PARALLEL_UPDATES = 0
 _DEFAULT_EVENT_DURATION = timedelta(hours=1)
 
 
-
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: BudbeeConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the Budbee deliveries calendar from a config entry."""
-    async_add_entities([BudbeeDeliveriesCalendar(entry.runtime_data.coordinator, entry)])
+    async_add_entities(
+        [BudbeeDeliveriesCalendar(entry.runtime_data.coordinator, entry)]
+    )
 
 
 class BudbeeDeliveriesCalendar(CoordinatorEntity[BudbeeCoordinator], CalendarEntity):

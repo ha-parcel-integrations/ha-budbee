@@ -1,9 +1,9 @@
 """Tests for Budbee diagnostics."""
+
+from datetime import timedelta
 from unittest.mock import MagicMock
 
-from custom_components.budbee.diagnostics import (
-    async_get_config_entry_diagnostics,
-)
+from custom_components.budbee.diagnostics import async_get_config_entry_diagnostics
 from custom_components.budbee.parcels import normalize_parcel
 
 from .payloads import ACTIVE_CODE, box_sample
@@ -82,8 +82,6 @@ async def test_diagnostics_redacts_physical_access_codes(hass):
 
 async def test_diagnostics_reports_the_update_interval_in_seconds(hass):
     """A fixed/auto interval must serialise as plain seconds, not a timedelta."""
-    from datetime import timedelta
-
     entry = MagicMock()
     entry.options = {}
     entry.runtime_data.coordinator.data = []

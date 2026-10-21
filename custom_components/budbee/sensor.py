@@ -1,8 +1,9 @@
 """Sensor platform for the Budbee parcel tracker integration."""
+
 from __future__ import annotations
 
-import logging
 from datetime import datetime
+import logging
 from typing import Any
 
 from homeassistant.components.sensor import (
@@ -74,7 +75,7 @@ async def async_setup_entry(
             and entity_entry.unique_id.startswith(f"{entry_id}_")
             and entity_entry.unique_id not in non_parcel_unique_ids
         ):
-            barcode = entity_entry.unique_id[len(f"{entry_id}_"):]
+            barcode = entity_entry.unique_id[len(f"{entry_id}_") :]
             if barcode not in current_barcodes:
                 registry.async_remove(entity_entry.entity_id)
 
@@ -84,10 +85,10 @@ async def async_setup_entry(
         ),
         BudbeeAwaitingPickupSensor(coordinator, entry),
     ]
-    for parcel in _active_parcels(coordinator):
-        entities.append(
-            BudbeeParcelSensor(coordinator, entry, parcel.get("barcode", ""))
-        )
+    entities.extend(
+        BudbeeParcelSensor(coordinator, entry, parcel.get("barcode", ""))
+        for parcel in _active_parcels(coordinator)
+    )
     entities.append(BudbeeNextDeliverySensor(coordinator, entry))
     entities.append(BudbeeDeliveredParcelsSensor(coordinator, entry))
     entities.append(BudbeeOutgoingParcelsSensor(coordinator, entry))
@@ -97,9 +98,7 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class BudbeeAwaitingPickupSensor(
-    CoordinatorEntity[BudbeeCoordinator], SensorEntity
-):
+class BudbeeAwaitingPickupSensor(CoordinatorEntity[BudbeeCoordinator], SensorEntity):
     """Parcels that have arrived at a pickup point and are ready to collect."""
 
     _attr_has_entity_name = True
@@ -132,9 +131,7 @@ class BudbeeAwaitingPickupSensor(
         return {"parcels": self._parcels()}
 
 
-class BudbeeIncomingParcelsSensor(
-    CoordinatorEntity[BudbeeCoordinator], SensorEntity
-):
+class BudbeeIncomingParcelsSensor(CoordinatorEntity[BudbeeCoordinator], SensorEntity):
     """Summary sensor: count of active (not-yet-delivered) tracked parcels.
 
     Spawns a per-parcel sensor for each new barcode and removes stale ones
@@ -239,9 +236,7 @@ class BudbeeParcelSensor(CoordinatorEntity[BudbeeCoordinator], SensorEntity):
         return dict(parcel) if parcel else {}
 
 
-class BudbeeNextDeliverySensor(
-    CoordinatorEntity[BudbeeCoordinator], SensorEntity
-):
+class BudbeeNextDeliverySensor(CoordinatorEntity[BudbeeCoordinator], SensorEntity):
     """Earliest expected delivery datetime across all active parcels."""
 
     _attr_has_entity_name = True
@@ -249,9 +244,7 @@ class BudbeeNextDeliverySensor(
     _attr_device_class = SensorDeviceClass.TIMESTAMP
     _attr_attribution = ATTRIBUTION
 
-    def __init__(
-        self, coordinator: BudbeeCoordinator, entry: ConfigEntry
-    ) -> None:
+    def __init__(self, coordinator: BudbeeCoordinator, entry: ConfigEntry) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{entry.entry_id}_next_delivery"
@@ -290,9 +283,7 @@ class BudbeeNextDeliverySensor(
         }
 
 
-class BudbeeDeliveredParcelsSensor(
-    CoordinatorEntity[BudbeeCoordinator], SensorEntity
-):
+class BudbeeDeliveredParcelsSensor(CoordinatorEntity[BudbeeCoordinator], SensorEntity):
     """Recently delivered tracked Budbee parcels."""
 
     _attr_has_entity_name = True
@@ -301,9 +292,7 @@ class BudbeeDeliveredParcelsSensor(
     _attr_attribution = ATTRIBUTION
     _unrecorded_attributes = frozenset({"parcels"})
 
-    def __init__(
-        self, coordinator: BudbeeCoordinator, entry: ConfigEntry
-    ) -> None:
+    def __init__(self, coordinator: BudbeeCoordinator, entry: ConfigEntry) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{entry.entry_id}_delivered_parcels"
@@ -320,9 +309,7 @@ class BudbeeDeliveredParcelsSensor(
         return {"parcels": self.coordinator.delivered}
 
 
-class BudbeeOutgoingParcelsSensor(
-    CoordinatorEntity[BudbeeCoordinator], SensorEntity
-):
+class BudbeeOutgoingParcelsSensor(CoordinatorEntity[BudbeeCoordinator], SensorEntity):
     """Active parcels the user is sending (a return or an on-demand pickup)."""
 
     _attr_has_entity_name = True
@@ -331,9 +318,7 @@ class BudbeeOutgoingParcelsSensor(
     _attr_attribution = ATTRIBUTION
     _unrecorded_attributes = frozenset({"parcels"})
 
-    def __init__(
-        self, coordinator: BudbeeCoordinator, entry: ConfigEntry
-    ) -> None:
+    def __init__(self, coordinator: BudbeeCoordinator, entry: ConfigEntry) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{entry.entry_id}_outgoing_parcels"
@@ -350,9 +335,7 @@ class BudbeeOutgoingParcelsSensor(
         return {"parcels": self.coordinator.outgoing}
 
 
-class BudbeeOutgoingDeliveredSensor(
-    CoordinatorEntity[BudbeeCoordinator], SensorEntity
-):
+class BudbeeOutgoingDeliveredSensor(CoordinatorEntity[BudbeeCoordinator], SensorEntity):
     """Recently delivered parcels the user sent."""
 
     _attr_has_entity_name = True
@@ -361,9 +344,7 @@ class BudbeeOutgoingDeliveredSensor(
     _attr_attribution = ATTRIBUTION
     _unrecorded_attributes = frozenset({"parcels"})
 
-    def __init__(
-        self, coordinator: BudbeeCoordinator, entry: ConfigEntry
-    ) -> None:
+    def __init__(self, coordinator: BudbeeCoordinator, entry: ConfigEntry) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{entry.entry_id}_outgoing_delivered_parcels"
@@ -380,9 +361,7 @@ class BudbeeOutgoingDeliveredSensor(
         return {"parcels": self.coordinator.delivered_outgoing}
 
 
-class BudbeeLastUpdateSensor(
-    CoordinatorEntity[BudbeeCoordinator], SensorEntity
-):
+class BudbeeLastUpdateSensor(CoordinatorEntity[BudbeeCoordinator], SensorEntity):
     """Diagnostic sensor reporting when Budbee was last polled successfully."""
 
     _attr_has_entity_name = True
@@ -391,9 +370,7 @@ class BudbeeLastUpdateSensor(
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_attribution = ATTRIBUTION
 
-    def __init__(
-        self, coordinator: BudbeeCoordinator, entry: ConfigEntry
-    ) -> None:
+    def __init__(self, coordinator: BudbeeCoordinator, entry: ConfigEntry) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{entry.entry_id}_last_update"
