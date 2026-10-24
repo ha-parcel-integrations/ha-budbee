@@ -5,7 +5,7 @@ The parcel mapping itself is covered by ``test_parcels.py``.
 
 import asyncio
 from datetime import UTC, datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.update_coordinator import UpdateFailed
@@ -794,3 +794,23 @@ async def test_outgoing_parcel_first_seen_fires_nothing(hass):
     await hass.async_block_till_done()
 
     assert fired == []
+
+
+async def test_failed_poll_drops_the_overnight_interval(hass):
+    entry = _entry_with([{CONF_TRACKING_CODE: DELIVERED_CODE}])
+    entry.add_to_hass(hass)
+    coordinator = BudbeeCoordinator(hass, AsyncMock(), entry)
+    coordinator.update_interval = timedelta(hours=5, minutes=40)
+
+    noon = datetime(2026, 1, 15, 12, tzinfo=UTC)
+    with (
+        patch.object(coordinator, "_async_poll", side_effect=TimeoutError),
+        patch("custom_components.budbee.coordinator.dt_util.now", return_value=noon),
+        pytest.raises(TimeoutError),
+    ):
+        await coordinator._async_update_data()
+
+    assert coordinator.update_interval is not None
+    assert coordinator.update_interval <= timedelta(
+        minutes=MID_INTERVAL_MINUTES + STAGGER_MINUTES
+    )
