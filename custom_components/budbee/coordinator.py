@@ -311,13 +311,17 @@ class BudbeeCoordinator(DataUpdateCoordinator[list[dict]]):
         if outgoing:
             self._report_outgoing()
 
-        self.delivered, active_in = self._split_delivered(incoming)
-        self.delivered_outgoing, self.outgoing = self._split_delivered(outgoing)
+        delivered_in, active_in = self._split_delivered(incoming)
+        delivered_out, self.outgoing = self._split_delivered(outgoing)
+        self.delivered = apply_delivered_filter(delivered_in, self.config_entry)
+        self.delivered_outgoing = apply_delivered_filter(
+            delivered_out, self.config_entry
+        )
 
-        # Incoming = active + delivered, combined so the transition to
-        # delivered is visible in one set.
-        combined_in = active_in + self.delivered
-        combined_out = self.outgoing + self.delivered_outgoing
+        # Events and remembered state cover every parcel; the retention option
+        # only limits what the delivered sensor shows.
+        combined_in = active_in + delivered_in
+        combined_out = self.outgoing + delivered_out
         self._fire_change_events(combined_in)
         self._fire_outgoing_change_events(combined_out)
         self._known_state = self._status_map(combined_in)
@@ -347,12 +351,9 @@ class BudbeeCoordinator(DataUpdateCoordinator[list[dict]]):
         return active_in
 
     def _split_delivered(self, parcels: list[dict]) -> tuple[list[dict], list[dict]]:
-        """Return (delivered, active) — delivered filtered, both sorted."""
-        delivered = apply_delivered_filter(
-            sort_parcels_by_ts(
-                [p for p in parcels if p["delivered"]], "delivered_at", descending=True
-            ),
-            self.config_entry,
+        """Return (delivered, active), both sorted."""
+        delivered = sort_parcels_by_ts(
+            [p for p in parcels if p["delivered"]], "delivered_at", descending=True
         )
         active = sort_parcels_by_ts(
             [p for p in parcels if not p["delivered"]], "planned_from"
