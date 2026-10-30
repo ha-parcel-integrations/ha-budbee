@@ -117,6 +117,7 @@ Standard HA removal applies: **Settings → Devices & Services → Budbee → �
 | `sensor.budbee_incoming_parcels` | Number of active tracked parcels, full list under the `parcels` attribute |
 | `sensor.budbee_parcel_<code>` | One per tracked parcel; state is the canonical status, attributes carry the full normalised parcel |
 | `sensor.budbee_next_delivery` | Earliest expected delivery moment across all active parcels |
+| `sensor.budbee_awaiting_pickup` | Incoming parcels that are ready to collect at a pickup point |
 | `sensor.budbee_delivered_parcels` | Recently delivered parcels (see the retention option) |
 | `sensor.budbee_outgoing_parcels` | Parcels you are sending back through Budbee |
 | `sensor.budbee_delivered_outgoing_parcels` | Recently completed outgoing parcels |
@@ -198,7 +199,7 @@ logger:
 - **A parcel shows `unknown`** — Budbee does not know the number yet (their API answers `ORDER_NOT_FOUND` until the shop hands the parcel over), or the number is wrong. It picks up automatically once Budbee registers it.
 - **No expected delivery time on a locker parcel until it reaches a terminal** — a Budbee Box order only gets an ETA once it's on its final leg to the locker; before that, `planned_to` is empty. It never gets a *collection* deadline either — that's a different date (when you must pick it up) and stays under the raw attribute, not the delivery window.
 - **No status history** — Budbee's tracking API returns no event list at all, so the `history` attribute is always empty.
-- **A status logs "Unrecognised Budbee status"** — please [open an issue](https://github.com/ha-parcel-integrations/ha-budbee/issues/new) with the logged line so the mapping can be extended.
+- **A status logs "Unrecognised Budbee status"** — please [open an issue](https://github.com/ha-parcel-integrations/ha-budbee/issues/new?template=unrecognised_status.yml) with the logged line so the mapping can be extended.
 
 ## Related integrations
 
