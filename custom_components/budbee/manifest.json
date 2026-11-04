@@ -1,6 +1,7 @@
 {
   "domain": "budbee",
   "name": "Budbee",
+  "categories": ["productivity_information"],
   "codeowners": [
     "@peter-mdf"
   ],
