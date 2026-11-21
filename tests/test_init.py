@@ -108,6 +108,35 @@ async def test_per_parcel_sensor_spawn_and_remove(hass):
         )
 
 
+async def test_pickup_sensors_register_and_survive_the_stale_sweep(hass):
+    """Both pickup sensors exist and a restored awaiting_pickup is not swept."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id=DOMAIN,
+        options={CONF_PARCELS: [{CONF_TRACKING_CODE: ACTIVE_CODE}]},
+    )
+    entry.add_to_hass(hass)
+    registry = er.async_get(hass)
+    registry.async_get_or_create(
+        "sensor",
+        DOMAIN,
+        f"{entry.entry_id}_awaiting_pickup",
+        config_entry=entry,
+    )
+
+    mock = AsyncMock(return_value=_sample(ACTIVE_CODE))
+    with patch(
+        "custom_components.budbee.api.BudbeeApiClient.async_get_parcel", new=mock
+    ):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    for suffix in ("awaiting_pickup", "en_route_to_pickup_point"):
+        assert registry.async_get_entity_id(
+            "sensor", DOMAIN, f"{entry.entry_id}_{suffix}"
+        )
+
+
 async def test_options_update_applies_live_without_reload(hass):
     """Adding a parcel via options refreshes the coordinator immediately."""
     entry = MockConfigEntry(

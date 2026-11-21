@@ -119,6 +119,10 @@
         "name": "Innkommende pakker",
         "unit_of_measurement": "pakker"
       },
+      "en_route_to_pickup_point": {
+        "name": "På vei til hentested",
+        "unit_of_measurement": "pakker"
+      },
       "awaiting_pickup": {
         "name": "Klar for henting",
         "unit_of_measurement": "pakker"

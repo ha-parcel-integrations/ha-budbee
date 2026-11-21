@@ -284,14 +284,13 @@ def test_normalize_box_order_dropped_off_is_in_transit_not_pickup():
     """
     parcel = normalize_parcel(box_sample(status="DroppedOff"))
     assert parcel["status"] == ParcelStatus.IN_TRANSIT
-    assert parcel["pickup"] is False
+    assert parcel["planned_from"] is None
 
 
 def test_normalize_returned_to_terminal_is_in_transit_on_both_order_types():
     """Regression: "Returned" names terminal arrival, not a reversal."""
     box_parcel = normalize_parcel(box_sample(status="ReturnedToTerminal"))
     assert box_parcel["status"] == ParcelStatus.IN_TRANSIT
-    assert box_parcel["pickup"] is False
 
     delivery_parcel = normalize_parcel(delivery_sample(state="ReturnedToTerminal"))
     assert delivery_parcel["status"] == ParcelStatus.IN_TRANSIT
@@ -305,15 +304,13 @@ def test_normalize_box_order_is_delivered_only_once_picked_up():
     assert parcel["barcode"] == DELIVERED_CODE
 
 
-def test_normalize_locker_name_falls_back_to_the_address():
+def test_normalize_locker_without_a_name_has_no_pickup_point():
     raw = box_sample()
     raw["lockerAddress"]["name"] = None
     raw["lockerAttributes"]["address"]["name"] = None
-    assert normalize_parcel(raw)["pickup_point"] == "Voorbeeldstraat 1, Amsterdam"
-
-    raw["lockerAddress"]["street"] = None
-    raw["lockerAttributes"]["address"]["street"] = None
-    assert normalize_parcel(raw)["pickup_point"] == "Amsterdam"
+    parcel = normalize_parcel(raw)
+    assert parcel["pickup"] is True
+    assert parcel["pickup_point"] is None
 
 
 def test_normalize_without_a_locker_has_no_pickup_point():
@@ -343,12 +340,19 @@ def test_normalize_delivery_order_delivered_drops_the_window():
     assert parcel["planned_to"] is None
 
 
-def test_normalize_collapses_point_estimate_to_no_window_end():
+def test_normalize_point_estimate_ends_at_the_end_of_that_day():
     raw = delivery_sample()
     raw["consignment"]["stop"] = raw["consignment"]["start"]
     parcel = normalize_parcel(raw)
     assert parcel["planned_from"] == "2026-04-29T13:00:00Z"
-    assert parcel["planned_to"] is None
+    assert parcel["planned_to"] == "2026-04-29T23:59:59+02:00"
+
+
+def test_unknown_time_zone_falls_back_to_the_home_assistant_zone():
+    raw = delivery_sample()
+    raw["timeZone"] = "Not/AZone"
+    raw["consignment"]["stop"] = raw["consignment"]["start"]
+    assert normalize_parcel(raw)["planned_to"] is not None
 
 
 def test_capabilities_are_known_values():
@@ -357,7 +361,7 @@ def test_capabilities_are_known_values():
 
 
 def test_capabilities_match_the_locker_and_window_support():
-    """CAPABILITIES must agree with test_normalize_locker_name_falls_back_to_the_address
+    """CAPABILITIES must agree with test_normalize_locker_without_a_name_has_no_pickup_point
     and test_normalize_delivery_order_has_the_consignment_window — Budbee never
     exposes weight/dimensions/history."""
     assert {"delivery_window", "pickup_point", "url"} == CAPABILITIES
@@ -504,13 +508,13 @@ def test_sibling_brand_is_reported(caplog):
     assert "PORTERBUDDY" in caplog.text
 
 
-def test_eta_on_a_locker_order_becomes_planned_to(caplog):
+def test_eta_on_a_locker_order_becomes_planned_from(caplog):
     """Confirmed live 2026-08-08: ``eta`` is the delivery-into-locker time."""
     raw = box_sample()
     raw["eta"] = "2026-04-29T13:40:00Z"
     parcel = normalize_parcel(raw)
-    assert parcel["planned_to"] == "2026-04-29T13:40:00Z"
-    assert parcel["planned_from"] is None
+    assert parcel["planned_from"] == "2026-04-29T13:40:00Z"
+    assert parcel["planned_to"] == "2026-04-29T23:59:59+02:00"
     assert "ETA" in caplog.text
 
 
@@ -518,6 +522,15 @@ def test_eta_is_suppressed_once_picked_up():
     raw = collected_sample()
     raw["eta"] = "2026-04-29T13:40:00Z"
     parcel = normalize_parcel(raw)
+    assert parcel["planned_from"] is None
+    assert parcel["planned_to"] is None
+
+
+def test_eta_is_suppressed_once_in_the_locker():
+    raw = waiting_sample()
+    raw["eta"] = "2026-04-29T13:40:00Z"
+    parcel = normalize_parcel(raw)
+    assert parcel["planned_from"] is None
     assert parcel["planned_to"] is None
 
 

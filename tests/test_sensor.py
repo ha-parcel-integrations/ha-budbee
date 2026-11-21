@@ -7,6 +7,7 @@ from custom_components.budbee.const import ParcelStatus
 from custom_components.budbee.sensor import (
     BudbeeAwaitingPickupSensor,
     BudbeeDeliveredParcelsSensor,
+    BudbeeEnRouteToPickupPointSensor,
     BudbeeIncomingParcelsSensor,
     BudbeeLastUpdateSensor,
     BudbeeNextDeliverySensor,
@@ -62,6 +63,30 @@ def test_awaiting_pickup_counts_every_parcel_at_pickup_point():
     assert len(sensor.extra_state_attributes["parcels"]) == 2
 
 
+def test_en_route_counts_only_pickup_parcels_not_yet_at_the_point():
+    coming = _parcel("COMING", ParcelStatus.IN_TRANSIT, pickup=True)
+    ofd = _parcel("OFD", ParcelStatus.OUT_FOR_DELIVERY, pickup=True)
+    at_point = _parcel("HERE", ParcelStatus.AT_PICKUP_POINT, pickup=True)
+    returning = _parcel("BACK", ParcelStatus.RETURNING, pickup=True)
+    delivered = _parcel("DONE", ParcelStatus.DELIVERED, pickup=True)
+    door = _parcel("DOOR", ParcelStatus.IN_TRANSIT, pickup=False)
+    sensor = BudbeeEnRouteToPickupPointSensor(
+        _coordinator([coming, ofd, at_point, returning, door]), _entry()
+    )
+    assert sensor.native_value == 2
+    assert [p["barcode"] for p in sensor.extra_state_attributes["parcels"]] == [
+        "COMING",
+        "OFD",
+    ]
+    assert delivered not in sensor.extra_state_attributes["parcels"]
+    assert sensor.unique_id == "e1_en_route_to_pickup_point"
+
+
+def test_en_route_zero_when_no_parcels():
+    sensor = BudbeeEnRouteToPickupPointSensor(_coordinator([]), _entry())
+    assert sensor.native_value == 0
+
+
 def test_awaiting_pickup_zero_when_no_parcels():
     sensor = BudbeeAwaitingPickupSensor(_coordinator([]), _entry())
     assert sensor.native_value == 0
@@ -84,12 +109,12 @@ def test_parcel_sensor_missing_barcode():
 def test_next_delivery_picks_earliest():
     coordinator = _coordinator(
         [
-            _parcel("A", planned_from="2026-05-02T10:00:00Z"),
-            _parcel("B", planned_from="2026-05-01T10:00:00Z"),
+            _parcel("A", planned_from="2099-05-02T10:00:00Z"),
+            _parcel("B", planned_from="2099-05-01T10:00:00Z"),
         ]
     )
     sensor = BudbeeNextDeliverySensor(coordinator, _entry())
-    assert sensor.native_value == datetime(2026, 5, 1, 10, 0, tzinfo=UTC)
+    assert sensor.native_value == datetime(2099, 5, 1, 10, 0, tzinfo=UTC)
     assert sensor.extra_state_attributes["barcode"] == "B"
 
 
@@ -103,7 +128,7 @@ def test_next_delivery_skips_unparseable_moment():
     coordinator = _coordinator(
         [
             _parcel("A", planned_from="not-a-date"),
-            _parcel("B", planned_from="2026-05-01T10:00:00Z"),
+            _parcel("B", planned_from="2099-05-01T10:00:00Z"),
         ]
     )
     sensor = BudbeeNextDeliverySensor(coordinator, _entry())
@@ -125,3 +150,14 @@ def test_last_update_sensor():
     coordinator.last_success_time = moment
     sensor = BudbeeLastUpdateSensor(coordinator, _entry())
     assert sensor.native_value == moment
+
+
+def test_next_delivery_skips_a_window_that_has_ended():
+    coordinator = _coordinator(
+        [
+            _parcel("OLD", planned_from="2000-05-01T10:00:00Z"),
+            _parcel("NEW", planned_from="2099-05-01T10:00:00Z"),
+        ]
+    )
+    sensor = BudbeeNextDeliverySensor(coordinator, _entry())
+    assert sensor.extra_state_attributes["barcode"] == "NEW"

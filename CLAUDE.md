@@ -68,20 +68,32 @@ canonical mapping. Do not duplicate them here.
   `history` (**no** `events[]` on `/box/` and every history sub-route 404s
   there — see below; the `DELIVERY` conspectus may carry `events[]`, but no
   home-delivery order has been read live, so `history` stays `None` there too
-  until one is), `receiver` (masked, above), and `planned_from` on locker
-  orders — Budbee reports no window start, ever. `latestPickupDate` is a
+  until one is) and `receiver` (masked, above). `latestPickupDate` is a
   *collection deadline*, not a delivery window, so it stays under `raw` rather
-  than `planned_to`. Same call `ha-inpost` makes for `expiryDate`. Reflected
-  in `const.py`'s `CAPABILITIES` (feeds the docs site's comparison table) —
-  keep the two in agreement if that ever changes.
-- **`planned_to` on a locker order comes from `eta`, once it appears.**
+  than `planned_to`. Reflected in `const.py`'s `CAPABILITIES` (feeds the docs
+  site's comparison table) — keep the two in agreement if that ever changes.
+- **The locker `eta` is `planned_from`, ending at the end of that day.**
   `eta`/`etaInformation` are `null` until the parcel reaches a terminal
   (`ReturnedToTerminal`), confirmed live 2026-08-08 as the delivery-*into-the-
   locker* time (predicted 25 minutes ahead of the real drop) — not a
-  door-delivery window, and not the collection deadline. Suppressed once
-  `delivered` like every other carrier's `planned_to`. The `shape:box-eta`
-  one-shot WARNING still fires once, asking the user to confirm the value
-  matched reality, since the confirmation so far is a single data point.
+  door-delivery window, and not the collection deadline. It is a single
+  moment, so `planned_window` stretches it to 23:59:59 in the order's own
+  `timeZone` (Home Assistant's zone if that is missing). Like every pickup
+  parcel it is emptied once the parcel is in the locker (`at_pickup_point`).
+  The `shape:box-eta` one-shot WARNING still fires once, asking the user to
+  confirm the value matched reality, since the confirmation so far is a single
+  data point.
+- **`pickup` is the order type.** `meta.type == BOX` is a structured route
+  flag, so `pickup` is `True` for every locker order from the first poll and
+  stays `True` after collection; a door delivery is `False`. `pickup_point` is
+  the locker's name (never a street or city) and `None` when Budbee gives no
+  name or the order is not a locker order. `sensor.en_route_to_pickup_point`
+  counts active `pickup` parcels not yet `at_pickup_point` or `returning`, so a
+  Box parcel counts from the first poll; `awaiting_pickup` counts
+  `at_pickup_point`.
+- **Door window uses the contract's shape table.** `consignment.start`/`stop`
+  keep both ends; a start equal to the stop is one moment and ends at 23:59:59
+  that day.
 - **No `include_history` option** — the only carrier in the suite without one.
   A toggle that can never produce anything is worse than no toggle, and
   accumulating a timeline locally from polls was rejected: it would differ per

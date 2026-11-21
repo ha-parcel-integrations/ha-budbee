@@ -16,11 +16,14 @@ payload's own shape decides.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from collections.abc import Iterable
+from datetime import UTC, date, datetime, time, timedelta, tzinfo
 import logging
 from typing import Any
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.util import dt as dt_util
 
 from .const import (
     CONF_DELIVERED_FILTER_AMOUNT,
@@ -251,7 +254,7 @@ def _warn_unverified_shapes(order: str, raw: dict) -> None:
             "shape:box-eta",
             "A Budbee locker parcel carries an ETA. Confirmed once (2026-08-08:"
             " predicted 25 minutes ahead of the real locker-drop) as the "
-            "delivery-into-locker time, now reported as `planned_to` — please "
+            "delivery-into-locker time, now reported as `planned_from` — please "
             "confirm it matches when your parcel actually reached the locker."
             "\n  fields=%s",
             sorted(k for k in ("eta", "etaInformation") if raw.get(k)),
@@ -451,13 +454,120 @@ def _locker_name(raw: dict) -> str | None:
         name = unmasked(address.get("name"))
         if name:
             return name
-        street = unmasked(address.get("street"))
-        city = unmasked(address.get("city"))
-        if street and city:
-            return f"{street}, {city}"
-        if street or city:
-            return street or city
     return None
+
+
+def _moment(value: Any, zone: tzinfo) -> tuple[datetime, bool, str] | None:
+    """Return ``(aware datetime, date_only, text)`` for a carrier time, or ``None``.
+
+    A naive time or a bare date gets ``zone``; an aware time keeps its offset
+    and, when it came in as a string, its own spelling.
+    """
+    if isinstance(value, datetime):
+        parsed = value
+    elif isinstance(value, date):
+        moment = datetime.combine(value, time.min, tzinfo=zone)
+        return moment, True, moment.isoformat()
+    elif isinstance(value, str) and value:
+        try:
+            if len(value) == 10:
+                moment = datetime.combine(
+                    date.fromisoformat(value), time.min, tzinfo=zone
+                )
+                return moment, True, moment.isoformat()
+            parsed = datetime.fromisoformat(value)
+        except ValueError:
+            return None
+        if parsed.tzinfo:
+            return parsed, False, value
+    else:
+        return None
+    moment = parsed if parsed.tzinfo else parsed.replace(tzinfo=zone)
+    return moment, False, moment.isoformat()
+
+
+def _end_of_day(moment: datetime, zone: tzinfo) -> datetime:
+    local = moment.astimezone(zone)
+    return datetime.combine(local.date(), time(23, 59, 59), tzinfo=zone)
+
+
+def planned_window(
+    start: Any, end: Any, *, zone: tzinfo
+) -> tuple[str | None, str | None]:
+    """Return ``(planned_from, planned_to)`` in the canonical window shape.
+
+    ``start`` and ``end`` are ISO strings, dates or datetimes, or ``None``; an
+    epoch number must be converted first (see ``to_iso_timestamp``). A window
+    keeps both ends. One moment with a time ends at ``23:59:59`` the same local
+    day; a date covers ``00:00:00`` to ``23:59:59``; two dates run from the
+    first day's start to the last day's end. Equal values are one moment,
+    reversed values are swapped, and ``planned_to`` is never set without
+    ``planned_from``. ``zone`` is the carrier's own zone: it dates naive times
+    and bare dates and decides which day a moment ends on, so a ``Z`` moment
+    still ends on the carrier's local day. When nothing is left of that day
+    after the moment, there is no ``planned_to``.
+    """
+    first = _moment(start, zone)
+    last = _moment(end, zone)
+    if first is None:
+        first, last = last, None
+    if first is None:
+        return None, None
+
+    def closing(moment: tuple[datetime, bool, str]) -> datetime:
+        return _end_of_day(moment[0], zone) if moment[1] else moment[0]
+
+    if last is not None and closing(last) < first[0]:
+        first, last = last, first
+    if last is not None and closing(last) == first[0]:
+        last = None
+
+    if last is None:
+        end_of_day = _end_of_day(first[0], zone)
+        return first[2], end_of_day.isoformat() if end_of_day > first[0] else None
+    return first[2], closing(last).isoformat() if last[1] else last[2]
+
+
+_NO_WINDOW_STATUSES = frozenset(
+    {ParcelStatus.AT_PICKUP_POINT, ParcelStatus.RETURNING, ParcelStatus.DELIVERED}
+)
+
+
+def planned_for_status(
+    status: ParcelStatus, planned_from: str | None, planned_to: str | None
+) -> tuple[str | None, str | None]:
+    """Empty the delivery window once the parcel is at its destination or done."""
+    if status in _NO_WINDOW_STATUSES:
+        return None, None
+    return planned_from, planned_to
+
+
+def is_pickup(
+    route_flag: bool | None,
+    status: ParcelStatus,
+    event_statuses: Iterable[ParcelStatus | None] = (),
+) -> bool:
+    """Whether the delivery route ends at a pickup point.
+
+    The carrier's own route flag wins; otherwise the parcel having reached
+    ``AT_PICKUP_POINT`` at any point counts, so the value survives collection.
+    """
+    if route_flag:
+        return True
+    return status is ParcelStatus.AT_PICKUP_POINT or any(
+        event is ParcelStatus.AT_PICKUP_POINT for event in event_statuses
+    )
+
+
+def _zone(raw: dict) -> tzinfo:
+    """Return the order's own time zone, else Home Assistant's."""
+    name = raw.get("timeZone")
+    if isinstance(name, str) and name:
+        try:
+            return ZoneInfo(name)
+        except (ZoneInfoNotFoundError, ValueError):
+            pass
+    return dt_util.get_default_time_zone()
 
 
 def normalize_parcel(raw: dict) -> dict:
@@ -478,18 +588,19 @@ def normalize_parcel(raw: dict) -> dict:
       Budbee masks unless you hand it the e-mail address we deliberately never
       ask for. It is the HA user themselves anyway.
     * ``weight`` and ``dimensions`` are never exposed by this carrier.
-    * On a locker order ``planned_from`` is always ``None`` — Budbee reports no
-      window start, only a single ``eta`` point once the parcel reaches a
-      terminal, which we surface as ``planned_to`` (confirmed live 2026-08-08
-      as the delivery-into-locker time). ``latestPickupDate`` is a *collection
-      deadline*, not a delivery window, and putting it in ``planned_to`` would
-      make the calendar lie about when the parcel arrives — it stays under
-      ``raw``.
+    * On a locker order Budbee reports no window, only a single ``eta`` point
+      once the parcel reaches a terminal: the delivery-into-locker time
+      (confirmed live 2026-08-08). It becomes ``planned_from``, ending at the
+      end of that day, and is emptied once the parcel is in the locker.
+      ``latestPickupDate`` is a *collection deadline*, not a delivery window,
+      and putting it in ``planned_to`` would make the calendar lie about when
+      the parcel arrives — it stays under ``raw``.
     """
     order = order_type(raw)
     raw_status = _raw_status(raw)
     status = map_parcel_status(raw_status, order)
     delivered = status is ParcelStatus.DELIVERED
+    zone = _zone(raw)
 
     if raw_status is not None:
         # Skipped for the placeholder a not-yet-registered code gets — that is
@@ -506,13 +617,12 @@ def normalize_parcel(raw: dict) -> dict:
         # exception (e.g. one that skips ``DroppedOff`` straight to
         # ``PickedUp``).
         delivered_at = to_iso_timestamp(raw.get("deliveredAt")) if delivered else None
-        # No window start is ever reported — only a single ETA point, confirmed
-        # live 2026-08-08 as the delivery-*into-the-locker* time (25 minutes
-        # ahead of the real drop). `etaInformation.eta` mirrors the top-level
-        # `eta`; fall back to it in case a future order carries only one.
-        planned_from = None
+        # Only a single ETA point is reported, confirmed live 2026-08-08 as the
+        # delivery-*into-the-locker* time (25 minutes ahead of the real drop).
+        # `etaInformation.eta` mirrors the top-level `eta`; fall back to it in
+        # case a future order carries only one.
         eta = raw.get("eta") or _get(raw, "etaInformation", "eta")
-        planned_to = to_iso_timestamp(eta)
+        planned_from, planned_to = planned_window(eta, None, zone=zone)
         receiver = unmasked(_get(raw, "consumer", "name"))
     else:
         # Reconstructed from Budbee's own tracking client; no door delivery has
@@ -523,16 +633,14 @@ def normalize_parcel(raw: dict) -> dict:
             status_block = {}
         delivered_at = to_iso_timestamp(status_block.get("date")) if delivered else None
         consignment = raw.get("consignment") or {}
-        planned_from = to_iso_timestamp(consignment.get("start"))
-        planned_to = to_iso_timestamp(consignment.get("stop"))
-        if (
-            planned_from
-            and planned_to
-            and parse_iso(planned_to) == parse_iso(planned_from)
-        ):
-            # Same instant twice is a point estimate, not a window.
-            planned_to = None
+        planned_from, planned_to = planned_window(
+            consignment.get("start"), consignment.get("stop"), zone=zone
+        )
         receiver = unmasked(_get(raw, "consumer", "name"))
+
+    planned_from, planned_to = planned_for_status(status, planned_from, planned_to)
+    # Locker orders end at a locker by route, known from the first poll.
+    pickup = is_pickup(order == ORDER_TYPE_BOX, status)
 
     return {
         "carrier": "Budbee",
@@ -543,10 +651,10 @@ def normalize_parcel(raw: dict) -> dict:
         "raw_status": raw_status,
         "delivered": delivered,
         "delivered_at": delivered_at,
-        "planned_from": None if delivered else planned_from,
-        "planned_to": None if delivered else planned_to,
-        "pickup": status is ParcelStatus.AT_PICKUP_POINT,
-        "pickup_point": _locker_name(raw),
+        "planned_from": planned_from,
+        "planned_to": planned_to,
+        "pickup": pickup,
+        "pickup_point": _locker_name(raw) if pickup else None,
         "url": tracking_url(tracking_code),
         "weight": None,
         "dimensions": None,
