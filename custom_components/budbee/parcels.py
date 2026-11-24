@@ -647,6 +647,7 @@ def normalize_parcel(raw: dict) -> dict:
         "barcode": tracking_code,
         "sender": unmasked(_get(raw, "merchant", "name")),
         "receiver": receiver,
+        "contents": None,
         "status": status,
         "raw_status": raw_status,
         "delivered": delivered,

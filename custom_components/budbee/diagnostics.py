@@ -25,6 +25,7 @@ TO_REDACT = {
     "barcode",
     "sender",
     "receiver",
+    "contents",
     "url",
     "pickup_point",
     # the parcel's identity on the wire — the token *is* the credential

@@ -33,6 +33,7 @@ from .const import (
     STAGGER_MINUTES,
     ParcelStatus,
 )
+from .contents import ContentsStore
 from .parcels import (
     apply_delivered_filter,
     is_outgoing,
@@ -150,6 +151,7 @@ class BudbeeCoordinator(DataUpdateCoordinator[list[dict]]):
             update_interval=timedelta(minutes=HOT_INTERVAL_MINUTES),
         )
         self._client = client
+        self.contents_store = ContentsStore(hass, entry.entry_id)
         self.delivered: list[dict] = []
         self.outgoing: list[dict] = []
         self.delivered_outgoing: list[dict] = []
@@ -186,6 +188,13 @@ class BudbeeCoordinator(DataUpdateCoordinator[list[dict]]):
         # diagnostics; ``None`` before the first refresh and whenever polling
         # is fully suspended (nothing tracked, or everything delivered).
         self._current_tier_minutes: int | None = None
+
+    def _apply_contents(self, parcel: dict, code: object) -> dict:
+        """Put the user's own contents text over the carrier's, when there is one."""
+        user_value = self.contents_store.get(code)
+        if user_value is not None:
+            parcel["contents"] = user_value
+        return parcel
 
     @property
     def current_tier_minutes(self) -> int | None:
@@ -297,7 +306,8 @@ class BudbeeCoordinator(DataUpdateCoordinator[list[dict]]):
             raise UpdateFailed("Budbee unreachable for all tracked parcels")
 
         entries = [
-            (code, raw, normalize_parcel(raw)) for code, raw in raws_by_code.items()
+            (code, raw, self._apply_contents(normalize_parcel(raw), code))
+            for code, raw in raws_by_code.items()
         ]
         incoming = [parcel for _, raw, parcel in entries if not is_outgoing(raw)]
         outgoing = [parcel for _, raw, parcel in entries if is_outgoing(raw)]

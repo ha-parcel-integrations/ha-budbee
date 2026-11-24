@@ -215,6 +215,7 @@ CANONICAL_KEYS = [
     "barcode",
     "sender",
     "receiver",
+    "contents",
     "status",
     "raw_status",
     "delivered",
@@ -261,6 +262,7 @@ def test_normalize_masks_are_not_names():
     """The keyless read masks the recipient — that must read as 'not exposed'."""
     parcel = normalize_parcel(box_sample())
     assert parcel["receiver"] is None
+    assert parcel["contents"] is None
     assert normalize_parcel(delivery_sample())["receiver"] is None
 
 

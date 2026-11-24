@@ -13,7 +13,9 @@ async def test_diagnostics_redacts_and_counts(hass):
     """Diagnostics get pasted into public issues — nothing identifying may survive."""
     entry = MagicMock()
     entry.options = {"parcels": [{"tracking_code": ACTIVE_CODE}]}
-    entry.runtime_data.coordinator.data = [normalize_parcel(box_sample())]
+    entry.runtime_data.coordinator.data = [
+        {**normalize_parcel(box_sample()), "contents": "Running shoes"}
+    ]
     entry.runtime_data.coordinator.delivered = []
     entry.runtime_data.coordinator.outgoing = []
     entry.runtime_data.coordinator.delivered_outgoing = []
@@ -39,6 +41,7 @@ async def test_diagnostics_redacts_and_counts(hass):
     # tracking codes and payload PII are redacted, at every nesting level
     assert result["entry_options"]["parcels"][0]["tracking_code"] == redacted
     assert parcel["barcode"] == redacted
+    assert parcel["contents"] == redacted
     assert parcel["url"] == redacted
     assert parcel["pickup_point"] == redacted
     assert parcel["raw"]["token"] == redacted

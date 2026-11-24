@@ -79,6 +79,10 @@
         "tracking_code": {
           "name": "Sporingskode",
           "description": "Budbee-sporingskoden."
+        },
+        "contents": {
+          "name": "Indhold",
+          "description": "Hvad der er i pakken, med dine egne ord. Hvis du kalder den igen for en fulgt pakke, erstattes indholdet; en tom tekst rydder det."
         }
       }
     },
@@ -89,6 +93,20 @@
         "tracking_code": {
           "name": "Sporingskode",
           "description": "Budbee-sporingskoden, der skal stoppes med at spore."
+        }
+      }
+    },
+    "update_contents": {
+      "name": "Opdater pakkens indhold",
+      "description": "Angiv med dine egne ord, hvad der er i en pakke, for et sporingsnummer. En tom tekst rydder indholdet.",
+      "fields": {
+        "tracking_code": {
+          "name": "Sporingskode",
+          "description": "Budbee-sporingskoden."
+        },
+        "contents": {
+          "name": "Indhold",
+          "description": "Hvad der er i pakken, med dine egne ord. En tom tekst rydder det."
         }
       }
     }

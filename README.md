@@ -39,6 +39,7 @@ A custom Home Assistant integration that tracks your [Budbee](https://budbee.com
 - Summary sensors: incoming parcels, next delivery, recently delivered parcels
 - Read-only **Deliveries** calendar with the expected delivery windows
 - `budbee.track_parcel` / `budbee.untrack_parcel` services, so a dashboard button can add a parcel
+- `budbee.update_contents` service (and a `contents` field on `track_parcel`) to note what is in a parcel; it titles the calendar event and shows on the next-delivery sensor
 - Events + device triggers for no-code automations (parcel registered, status changed, delivered, delivery time changed)
 - Parcels you *send* back through Budbee get their own summary sensors and events
 - A parcel in a Budbee Box reports `at_pickup_point`, and only counts as delivered once you have actually collected it
@@ -173,8 +174,11 @@ Every payload is the full normalised parcel plus the hub's `device_id`. Events a
 
 | Service | Fields | Description |
 |---|---|---|
-| `budbee.track_parcel` | `tracking_code` | Start tracking a parcel |
+| `budbee.track_parcel` | `tracking_code`, `contents` (optional) | Start tracking a parcel |
 | `budbee.untrack_parcel` | `tracking_code` | Stop tracking a parcel |
+| `budbee.update_contents` | `tracking_code`, `contents` | Set, replace or clear (empty text) a note on what is in a parcel |
+
+The `contents` text is stored locally, never sent to Budbee, and fills the parcel's `contents` field; it titles the parcel's calendar event and shows on the next-delivery sensor.
 
 ## Examples
 
