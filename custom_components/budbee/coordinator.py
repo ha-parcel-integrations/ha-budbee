@@ -39,6 +39,7 @@ from .parcels import (
     is_outgoing,
     normalize_parcel,
     sort_parcels_by_ts,
+    zone_name,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -305,8 +306,13 @@ class BudbeeCoordinator(DataUpdateCoordinator[list[dict]]):
         if codes_to_fetch and errors == len(codes_to_fetch) and not raws_by_code:
             raise UpdateFailed("Budbee unreachable for all tracked parcels")
 
+        zones = {
+            name: await dt_util.async_get_time_zone(name)
+            for raw in raws_by_code.values()
+            if (name := zone_name(raw)) is not None
+        }
         entries = [
-            (code, raw, self._apply_contents(normalize_parcel(raw), code))
+            (code, raw, self._apply_contents(normalize_parcel(raw, zones=zones), code))
             for code, raw in raws_by_code.items()
         ]
         incoming = [parcel for _, raw, parcel in entries if not is_outgoing(raw)]

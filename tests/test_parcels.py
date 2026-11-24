@@ -5,7 +5,7 @@ These need no Home Assistant instance — the whole point of keeping
 rewrite per carrier) can be tested as plain functions.
 """
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
@@ -31,6 +31,7 @@ from custom_components.budbee.parcels import (
     sort_parcels_by_ts,
     to_iso_timestamp,
     unmasked,
+    zone_name,
 )
 
 from .payloads import (
@@ -355,6 +356,20 @@ def test_unknown_time_zone_falls_back_to_the_home_assistant_zone():
     raw["timeZone"] = "Not/AZone"
     raw["consignment"]["stop"] = raw["consignment"]["start"]
     assert normalize_parcel(raw)["planned_to"] is not None
+
+
+def test_resolved_zones_are_used_and_an_unresolved_one_falls_back():
+    raw = delivery_sample()
+    raw["timeZone"] = "Europe/Stockholm"
+    raw["consignment"]["stop"] = raw["consignment"]["start"]
+    named = normalize_parcel(
+        raw, zones={"Europe/Stockholm": timezone(timedelta(hours=5))}
+    )
+    unresolved = normalize_parcel(raw, zones={"Europe/Stockholm": None})
+    assert named["planned_to"].endswith("+05:00")
+    assert unresolved["planned_to"] is not None
+    assert zone_name(raw) == "Europe/Stockholm"
+    assert zone_name({"timeZone": 5}) is None
 
 
 def test_capabilities_are_known_values():

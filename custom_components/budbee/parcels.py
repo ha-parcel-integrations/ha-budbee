@@ -16,7 +16,7 @@ payload's own shape decides.
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from datetime import UTC, date, datetime, time, timedelta, tzinfo
 import logging
 from typing import Any
@@ -559,18 +559,36 @@ def is_pickup(
     )
 
 
-def _zone(raw: dict) -> tzinfo:
-    """Return the order's own time zone, else Home Assistant's."""
+def zone_name(raw: dict) -> str | None:
+    """Return the IANA zone the order names, for the coordinator to resolve."""
     name = raw.get("timeZone")
-    if isinstance(name, str) and name:
-        try:
-            return ZoneInfo(name)
-        except (ZoneInfoNotFoundError, ValueError):
-            pass
+    return name if isinstance(name, str) and name else None
+
+
+def _zone(raw: dict, zones: Mapping[str, tzinfo | None] | None) -> tzinfo:
+    """Return the order's own time zone, else Home Assistant's.
+
+    The coordinator resolves zones off the event loop and passes them in;
+    ``zones=None`` (direct callers, tests) falls back to ``ZoneInfo``.
+    """
+    name = zone_name(raw)
+    if name is not None:
+        if zones is not None:
+            found = zones.get(name)
+            if found is not None:
+                return found
+        else:
+            try:
+                # suite: allow zoneinfo (only when the caller passes no zones; the coordinator does)
+                return ZoneInfo(name)
+            except (ZoneInfoNotFoundError, ValueError):
+                pass
     return dt_util.get_default_time_zone()
 
 
-def normalize_parcel(raw: dict) -> dict:
+def normalize_parcel(
+    raw: dict, *, zones: Mapping[str, tzinfo | None] | None = None
+) -> dict:
     """Return a carrier-agnostic parcel dict with the payload under ``raw``.
 
     The **keys of the returned dict are the contract**: every carrier in the
@@ -600,7 +618,7 @@ def normalize_parcel(raw: dict) -> dict:
     raw_status = _raw_status(raw)
     status = map_parcel_status(raw_status, order)
     delivered = status is ParcelStatus.DELIVERED
-    zone = _zone(raw)
+    zone = _zone(raw, zones)
 
     if raw_status is not None:
         # Skipped for the placeholder a not-yet-registered code gets — that is
